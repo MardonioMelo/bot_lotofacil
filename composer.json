@@ -1,0 +1,10 @@
+{
+    "autoload": {
+        "psr-4": {
+            "Src\\": "src/"
+        }
+    },
+    "require": {
+        "php-ai/php-ml": "^0.9.0"
+    }
+}
