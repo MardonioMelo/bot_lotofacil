@@ -13,7 +13,7 @@ class Game
     public function __construct()
     {
         $this->cal = new Calculation();
-        //  $this->cal->withThe25(); //criar aquivo de texto com representação das dezenas
+        // $this->cal->withThe25(); //criar aquivo de texto com representação das dezenas
     }
 
     /**
@@ -31,17 +31,18 @@ class Game
         //Teste
         if ($test) {
             $last_games = $this->cal->getLastGames(1);
+            $inedito = $this->cal->unprecedented(implode("-", $jogo));
             print_r("\n\n------------------------------------> \n");
             print_r(" Análise para Teste\n");
             print_r("------------------------------------> \n");
+            print_r('Inedito : ' . ($inedito == 0 ? 'Sim' : "Não ($inedito)") . "\n");
             print_r('Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n");
             print_r('Par     : ' .  $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
             print_r('Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n");
             print_r('Total   : ' . count($jogo) . " (15)\n");
-            print_r('Previsto: ' . implode("-", $jogo) . "\n");
+            print_r('Previsto: ' . implode("-", $jogo) . "\n");       
             print_r('Correto : ' . implode("-", $last_games[array_key_last($last_games)]) . ' (' . (array_key_last($last_games) + 1) . ")\n");
-            print_r('Acertos : ' . count($this->checkHits($jogo)) . "\n");
-            print_r($this->checkHits($jogo));
+            print_r('Acertos : ' . implode("-", $this->checkHits($jogo)) . ' (' . count($this->checkHits($jogo)) . ")\n");
         } else {
             print_r("\n\n------------------\n Análise para Jogar \n------------------ \n");
             print_r('Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n");
@@ -53,7 +54,35 @@ class Game
     }
 
     /**
-     * Undocumented function
+     * Verificar intervalos
+     *
+     * @return void
+     */
+    public function checkInterval()
+    {
+        $this->test = false;
+        $qtd_analysis = 500;
+        $last_games = $this->cal->getLastGames($qtd_analysis + ($this->test ? 1 : 0));
+
+        $i = 1;
+        $arr = [];
+        foreach ($last_games as $key => $item) {
+            if ((int)$item[0] == 1) {               
+                $i++;               
+            } else {               
+                $arr[$i] = empty($arr[$i])? 1: $arr[$i] + 1;                
+            }
+        }
+
+        foreach ($arr as $item) {
+          //  echo str_repeat("-", $item) . $item;
+          echo "-" . $item;
+        }
+         print_r(" | ".count($arr)/3);
+    }
+
+    /**
+     * Gerar Jogo
      *
      * @param integer $qtd_analysis Qtd a ser analisado
      * @param integer $qtd_dez_last Qtd das atrasadas
@@ -64,17 +93,17 @@ class Game
      */
     private function generateGame(
         $qtd_analysis = 20,
-        $qtd_dez_last = 7,
-        $qtd_num_plus = 9,
+        $qtd_dez_last = 5,
+        $qtd_num_plus = 6,
         $qtd_num_pri_s = 3,
         $qtd_num_pri_ns = 3
-    ): array {      
+    ): array {
 
         $jogo = []; //jogo vazio
         $numPri = [2, 3, 5, 7, 11, 13, 17, 19, 23];
         $numPar = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
         $numImp = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25];
-       
+
         # Selecionar os ultimos concursos (analisar dezenas que saiu e dezenas mais atrasadas)
         $last_games = $this->cal->getLastGames($qtd_analysis + ($this->test ? 1 : 0));
         if ($this->test) unset($last_games[array_key_last($last_games)]);
@@ -113,10 +142,10 @@ class Game
                 $jogo[] = $item;
                 $qtd_num_pri_s--;
             }
-        }
+        }     
 
         # Adicionar n números primos que não saiu no ultimo concurso
-        foreach ($numPri as $key => $item) {
+        foreach ($numPri as $key => $item) {       
 
             if (!in_array($item, $endGame) && $qtd_num_pri_ns > 0) {
                 $jogo[] = $item;
@@ -137,9 +166,8 @@ class Game
         # Remover repetidas adicionadas
         $jogo = array_unique($jogo);
 
-        $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola
-
-        print_r($checkMaxMin);
+        // $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola
+        // print_r($checkMaxMin);
 
         # ----------------------------------Regras ----------------------------------------->   
 
@@ -152,7 +180,7 @@ class Game
     }
 
     /**
-     * Verificar certos referente ao proximo jogo de teste
+     * Verificar acertos referente ao proximo jogo de teste
      *
      * @param array $jogo
      * @return array

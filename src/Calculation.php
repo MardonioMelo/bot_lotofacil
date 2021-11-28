@@ -27,19 +27,17 @@ class Calculation
      * Nuca saiu uma jogo repetido de 15 certos
      *
      * @param string $jogo_input
-     * @return void
+     * @return int Retorna 0 se nunca saiu ou número do jogo se já saiu
      */
-    public function unprecedented(string $jogo_input): void
-    {
-        $jogos = [];
-
-        foreach ($this->dataset as $value) {
-            $jogos[] = implode("-", $value);
-        }
-
-        $result = in_array($jogo_input, $jogos) ? "\nJá saiu.\n" : "\nNunca saiu.\n";
-
-        print_r($result);
+    public function unprecedented(string $jogo_input): int
+    {   
+        $result = 0;
+        foreach ($this->dataset as $key => $value) {
+            if(implode("-", $value) == $jogo_input){
+                $result = $key + 1;
+            };
+        } 
+        return $result;
     }
 
     /**
@@ -205,7 +203,7 @@ class Calculation
     {
         print_r("\nConsultando dados da API...");
 
-        $last = file_get_contents('https://loterias-api-gutotech.herokuapp.com/api/v0/lotofacil');
+        $last = file_get_contents('https://loteriascaixa-api.herokuapp.com/api/lotofacil');
         $json = json_decode($last);
 
         print_r("\nSalvando os dados consultados...");
@@ -223,7 +221,7 @@ class Calculation
      * @return void
      */
     public function setDataset()
-    {
+    {     
         $json = json_decode(file_get_contents($this->file_dataset), true);
         $this->dataset = array_map(function ($arr) {
             return array_map(function ($v) {
@@ -239,7 +237,7 @@ class Calculation
      * @return array
      */
     public function getLastGames(int $limit): array
-    {
+    {       
         return array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
     }    
 }

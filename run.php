@@ -56,6 +56,7 @@ echo "\n 1 - Verificar se um número já foi jogado.";
 echo "\n 2 - ML.";
 echo "\n 3 - Teste Jogar.";
 echo "\n 4 - Jogar.";
+echo "\n 5 - Teste Interval.";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -89,6 +90,12 @@ switch (trim($input)) {
         $game = new Game();
         $game->play();
         break;
+    case 5:
+        clearTerminal();
+        $game = new Game();
+        $game->checkInterval();
+        break;
+    
 
     default:
         echo "\nEssa opção não exite, tente novamente";
