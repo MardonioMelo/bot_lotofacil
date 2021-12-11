@@ -53,7 +53,7 @@ function removerQuebraLinha($str)
 
 echo "\n Escolha uma opção:";
 echo "\n 1 - Verificar se um número já foi jogado.";
-echo "\n 2 - ML.";
+echo "\n 2 - Metodo Wordlist";
 echo "\n 3 - Teste Jogar.";
 echo "\n 4 - Jogar.";
 echo "\n 5 - Teste Interval.";
@@ -77,8 +77,8 @@ switch (trim($input)) {
         break;
     case 2:
         clearTerminal();
-        $computer = new Computer();
-        $computer->train();
+        $game = new Game();
+        $game->generateGame2();
         break;
     case 3:
         clearTerminal();
@@ -94,8 +94,7 @@ switch (trim($input)) {
         clearTerminal();
         $game = new Game();
         $game->checkInterval();
-        break;
-    
+        break;  
 
     default:
         echo "\nEssa opção não exite, tente novamente";

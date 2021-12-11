@@ -6,7 +6,7 @@ class Calculation
 {
 
     private $dataset;
-    private $file_dataset;    
+    private $file_dataset;
 
     /**
      * Construção
@@ -30,13 +30,13 @@ class Calculation
      * @return int Retorna 0 se nunca saiu ou número do jogo se já saiu
      */
     public function unprecedented(string $jogo_input): int
-    {   
+    {
         $result = 0;
         foreach ($this->dataset as $key => $value) {
-            if(implode("-", $value) == $jogo_input){
+            if (implode("-", $value) == $jogo_input) {
                 $result = $key + 1;
             };
-        } 
+        }
         return $result;
     }
 
@@ -221,8 +221,9 @@ class Calculation
      * @return void
      */
     public function setDataset()
-    {     
+    {
         $json = json_decode(file_get_contents($this->file_dataset), true);
+        sort($json);
         $this->dataset = array_map(function ($arr) {
             return array_map(function ($v) {
                 return (int) $v;
@@ -237,7 +238,27 @@ class Calculation
      * @return array
      */
     public function getLastGames(int $limit): array
-    {       
+    {
         return array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
-    }    
+    }
+
+    /**
+     * Verificar acertos referente ao proximo jogo de teste
+     *
+     * @param array $jogo
+     * @return array
+     */
+    public function checkHits(array $jogo): array
+    {
+        $last_games = $this->getLastGames(1);
+        $hits = [];
+
+        foreach ($last_games[array_key_last($last_games)] as $item) {
+            if (in_array($item, $jogo)) {
+                $hits[] = $item;
+            }
+        }
+
+        return $hits;
+    }
 }

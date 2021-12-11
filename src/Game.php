@@ -13,7 +13,7 @@ class Game
     public function __construct()
     {
         $this->cal = new Calculation();
-        // $this->cal->withThe25(); //criar aquivo de texto com representação das dezenas
+        $this->test = false;
     }
 
     /**
@@ -37,20 +37,63 @@ class Game
             print_r("------------------------------------> \n");
             print_r('Inedito : ' . ($inedito == 0 ? 'Sim' : "Não ($inedito)") . "\n");
             print_r('Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n");
-            print_r('Par     : ' .  $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
+            print_r('Par     : ' . $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
             print_r('Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n");
             print_r('Total   : ' . count($jogo) . " (15)\n");
-            print_r('Previsto: ' . implode("-", $jogo) . "\n");       
+            print_r('Previsto: ' . implode("-", $jogo) . "\n");
             print_r('Correto : ' . implode("-", $last_games[array_key_last($last_games)]) . ' (' . (array_key_last($last_games) + 1) . ")\n");
-            print_r('Acertos : ' . implode("-", $this->checkHits($jogo)) . ' (' . count($this->checkHits($jogo)) . ")\n");
+            print_r('Acertos : ' . implode("-", $this->cal->checkHits($jogo)) . ' (' . count($this->cal->checkHits($jogo)) . ")\n");
         } else {
             print_r("\n\n------------------\n Análise para Jogar \n------------------ \n");
             print_r('Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n");
-            print_r('Par     : ' .  $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
+            print_r('Par     : ' . $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
             print_r('Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n");
             print_r('Total   : ' . count($jogo) . " (15)\n");
             print_r('Previsto: ' . implode("-", $jogo) . "\n");
         }
+    }
+
+    public function generateGame2()
+    {
+        $wordlist = $this->playWordlist();       
+        $jogo = false;
+
+        if (!empty($wordlist)) {
+            foreach ($wordlist as $key => $item) {                  
+               $dezenas = explode(" ", trim($item));
+                
+                if(in_array("1", $dezenas)){
+                    $jogo = $dezenas;
+                }
+
+                if ($jogo) {                  
+                    break;
+                }
+            }
+            print_r($jogo);
+
+            $inedito = $this->cal->unprecedented(implode("-", $jogo));
+            print_r('Inedito : ' . ($inedito == 0 ? 'Sim' : "Não ($inedito)") . "\n");
+        } else {
+            print_r("Wordlist não existe ou não foi possivel carregar!");
+        }
+    }
+
+    /**
+     * Obter wordlist de todos os possiveis jogos
+     *
+     * @return array
+     */
+    public function playWordlist(): array
+    {
+        $file = 'wordlist_lotofacil.txt'; //3.268.760 combinações   
+        $arr = [];
+
+        if (file_exists($file)) {
+            $arr = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            unset($arr[0]);          
+        }
+        return $arr;
     }
 
     /**
@@ -67,18 +110,18 @@ class Game
         $i = 1;
         $arr = [];
         foreach ($last_games as $key => $item) {
-            if ((int)$item[0] == 1) {               
-                $i++;               
-            } else {               
-                $arr[$i] = empty($arr[$i])? 1: $arr[$i] + 1;                
+            if ((int)$item[0] == 1) {
+                $i++;
+            } else {
+                $arr[$i] = empty($arr[$i]) ? 1 : $arr[$i] + 1;
             }
         }
 
         foreach ($arr as $item) {
-          //  echo str_repeat("-", $item) . $item;
-          echo "-" . $item;
+            //  echo str_repeat("-", $item) . $item;
+            echo "-" . $item;
         }
-         print_r(" | ".count($arr)/3);
+        print_r(" | " . count($arr) / 3);
     }
 
     /**
@@ -91,13 +134,8 @@ class Game
      * @param integer $qtd_num_pri_ns Qtd de numeros primos que não saiu no ultimo sorteio
      * @return array
      */
-    private function generateGame(
-        $qtd_analysis = 20,
-        $qtd_dez_last = 5,
-        $qtd_num_plus = 6,
-        $qtd_num_pri_s = 3,
-        $qtd_num_pri_ns = 3
-    ): array {
+    private function generateGame($qtd_analysis = 30, $qtd_dez_last = 5, $qtd_num_plus = 3, $qtd_num_pri_s = 3, $qtd_num_pri_ns = 3): array
+    {
 
         $jogo = []; //jogo vazio
         $numPri = [2, 3, 5, 7, 11, 13, 17, 19, 23];
@@ -106,7 +144,7 @@ class Game
 
         # Selecionar os ultimos concursos (analisar dezenas que saiu e dezenas mais atrasadas)
         $last_games = $this->cal->getLastGames($qtd_analysis + ($this->test ? 1 : 0));
-        if ($this->test) unset($last_games[array_key_last($last_games)]);
+        if ($this->test) unset($last_games[array_key_last($last_games)]);     
 
         # Escolher as dezenas atrasadas de preferencia
         $laterNumbers = $this->cal->laterNumbers($last_games); //números mais atrasados     
@@ -114,7 +152,7 @@ class Game
         # Adicionar n números mais atrasadas
         foreach ($laterNumbers as $key => $item) {
 
-            if ($item >= 2 && $qtd_dez_last > 0) {
+            if ($item >= 3 && $qtd_dez_last > 0) {
                 $jogo[] = $key;
                 $qtd_dez_last--;
             }
@@ -142,10 +180,10 @@ class Game
                 $jogo[] = $item;
                 $qtd_num_pri_s--;
             }
-        }     
+        }
 
         # Adicionar n números primos que não saiu no ultimo concurso
-        foreach ($numPri as $key => $item) {       
+        foreach ($numPri as $key => $item) {
 
             if (!in_array($item, $endGame) && $qtd_num_pri_ns > 0) {
                 $jogo[] = $item;
@@ -167,9 +205,9 @@ class Game
         $jogo = array_unique($jogo);
 
         // $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola
-        // print_r($checkMaxMin);
 
-        # ----------------------------------Regras ----------------------------------------->   
+
+        # ----------------------------------Regras Não Aplicadas Ainda----------------------------------------->   
 
         # escolher de 7 a 10 dezenas do concurso anterior, preferencia 9     
         # não escolher mais que 8 dezenas seguidas 
@@ -177,25 +215,5 @@ class Game
         # não jogar jogo repetido  
         # entre os números primos, 3 devem ter saido no ultimo concurso e 2 não     
         return $jogo;
-    }
-
-    /**
-     * Verificar acertos referente ao proximo jogo de teste
-     *
-     * @param array $jogo
-     * @return array
-     */
-    private function checkHits(array $jogo): array
-    {
-        $last_games = $this->cal->getLastGames(1);
-        $hits = [];
-
-        foreach ($last_games[array_key_last($last_games)] as $item) {
-            if (in_array($item, $jogo)) {
-                $hits[] = $item;
-            }
-        }
-
-        return $hits;
     }
 }

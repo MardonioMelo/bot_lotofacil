@@ -7,7 +7,7 @@ Este projeto consiste em criar um bot que gere jogos para Lotofacil com a expect
 
 > Se você usar este projeto e ganhar, lembre-se de mim &#128517; !
 
-## Nota
+### Nota
 
 Probabilidade de acerto <br>
 Acertos | Chance <br>
@@ -17,23 +17,9 @@ Acertos | Chance <br>
 12 n.   | 1/59  <br>
 11 n.   | 1/11  <br>
 
-Nuca saiu uma jogo repetido de 15 números
+> Nuca saiu uma jogo repetido de 15 números
 
-Números que mais saem:
-- Bola1: máx. 1 | mín. 6
-- Bola2: máx. 2 | mín. 9
-- Bola3: máx. 3 | mín. 11
-- Bola4: máx. 4 | mín. 13
-- Bola5: máx. 5 | mín. 14
-- Bola6: máx. 6 | mín. 16
-- Bola7: máx. 7 | mín. 17
-- Bola8: máx. 8 | mín. 18
-- Bola9: máx. 9 | mín. 19
-- Bola10: máx. 10 | mín. 20
-- Bola11: máx. 12 | mín. 21
-- Bola12: máx. 13 | mín. 22
-- Bola13: máx. 15 | mín. 23
-- Bola14: máx. 17 | mín. 24
-- Bola15: máx. 18 | mín. 25
+### Wordlist
 
+[Clique aqui](https://mega.nz/file/fV1H2IIa#BbDVwtwr7z0OUMa_kj_W9HEWKLgUYgs9kKlRjETOluY) para baixar a WordList de todas as combinações possiveis da Lotofácil
       
