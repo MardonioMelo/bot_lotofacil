@@ -32,6 +32,7 @@ class Calculation
     public function unprecedented(string $jogo_input): int
     {
         $result = 0;
+        $jogo_input = trim($jogo_input);
         foreach ($this->dataset as $key => $value) {
             if (implode("-", $value) == $jogo_input) {
                 $result = $key + 1;

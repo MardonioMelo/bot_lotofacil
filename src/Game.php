@@ -51,11 +51,11 @@ class Game
      * @param integer $qtd_analysis Qtd a ser analisado
      * @param integer $qtd_dez_last Qtd das atrasadas
      * @param integer $qtd_num_plus Qtd dos mais sorteados
-     * @param integer $qtd_num_pri_s Qtd de numeros primos que saiu no ultimo sorteio
+     * @param integer $qtd_num_pri_s Qtd de números primos que saiu no ultimo sorteio
      * @param integer $qtd_num_pri_ns Qtd de numeros primos que não saiu no ultimo sorteio
      * @return array
      */
-    private function generateGame($qtd_analysis = 100, $qtd_dez_last = 5, $qtd_num_plus = 4, $qtd_num_pri_s = 5, $qtd_num_pri_ns = 6): array
+    private function generateGame($qtd_analysis = 100, $qtd_dez_last = 5, $qtd_num_plus = 4, $qtd_num_pri_s = 3, $qtd_num_pri_ns = 2): array
     {
         $jogo = []; //jogo vazio
         $numPri = [2, 3, 5, 7, 11, 13, 17, 19, 23];
@@ -82,18 +82,19 @@ class Game
         $countFrequency = $this->cal->countFrequency($last_games); //frequencia das dezenas   
 
         # Adicionar n números mais sorteados
+        $add_num_plus = $qtd_num_plus;
         foreach ($countFrequency as $key => $item) {
 
-            if ($qtd_num_plus > 0) {
+            if ($add_num_plus > 0) {
                 $jogo[] = $key;
-                $qtd_num_plus--;
+                $add_num_plus--;
             }
         }
 
         # Selecione o ultimo concurso
         $endGame = end($last_games);
 
-        # Adicionar n números primos que saiu no último concurso
+        # Adicionar de preferencia 3 números primos que saiu no último concurso
         foreach ($numPri as $key => $item) {
 
             if (in_array($item, $endGame) && $qtd_num_pri_s > 0) {
@@ -102,12 +103,31 @@ class Game
             }
         }
 
-        # Adicionar n números primos que não saiu no ultimo concurso
+        # Adicionar de preferencia 2 números primos que não saiu no ultimo concurso
         foreach ($numPri as $key => $item) {
 
             if (!in_array($item, $endGame) && $qtd_num_pri_ns > 0) {
                 $jogo[] = $item;
                 $qtd_num_pri_ns--;
+            }
+        }
+
+        # Remover repetidas adicionadas
+        $jogo = array_unique($jogo);
+
+        # Escolher de 7 a 10 dezenas do concurso anterior, preferencia 9 dezenas
+        $yes = $not = [];
+        foreach ($jogo as $key => $item) {
+            if (in_array($item, $endGame)) {
+                $yes[] = $item;
+            } else {
+                $not[] = $item;
+            }
+        }
+        if (count($yes) < 7) {
+            $n_diff = 7 - count($yes);
+            for ($i = 0; $i < $n_diff; $i++) {
+                $jogo[] = $not[rand(0, count($not) - 1)];
             }
         }
 
@@ -123,33 +143,27 @@ class Game
 
         # Remover repetidas adicionadas
         $jogo = array_unique($jogo);
+        sort($jogo);
 
-        # Escolher de 7 a 10 dezenas do concurso anterior, preferencia 9 dezenas
-        $yes = $not = [];
-        foreach ($jogo as $key => $item) {
-            if (in_array($item, $endGame)) {
-                $yes[] = $item;
-            } else {
-                $not[] = $item;
+        //Completar quantidade de dezenas que faltam para 15 com os números que mais saiu
+        if (count($jogo) < 15) {
+            $add_dez = (15 - count($jogo)) +  $qtd_num_plus;
+            $jogo = $this->generateGame($qtd_analysis, $qtd_dez_last, $add_dez);
+        }
+
+        # Verificar se cada bola estar entre o máximo e minimo de sua posição
+        $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola
+        $i = 0;
+        foreach ($jogo as $bola) {
+            $i++;
+            if($bola < $checkMaxMin['Bola'.$i]['min'] && $bola > $checkMaxMin['Bola'.$i]['max']){
+                echo "Fora do range Bola-$i: $bola";
             }
         }
-        $n_yes = count($yes);
-        if($n_yes < 7){
-            $jogo[] = $not[rand(0, count($not)-1)];
-        }
 
-        # Escolher de 2 a 5 dezenas entre 20 e 25 ou escolher de 4 a 8 dezenas seguidas entre 1 a 10
-
-
-        # ----------------------------------Regras Não Aplicadas Ainda----------------------------------------->  
-        # entre os números primos, 3 devem ter saido no ultimo concurso e 2 não     
-        # Verificar se cada bola estar entre o máximo e minimo de sua posição
-        //  $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola, depois 
-        //  print_r($checkMaxMin);
         # não escolher mais que 8 dezenas seguidas 
-        # não jogar jogo repetido  
+        # não jogar jogo repetido 
 
-        sort($jogo);
         return $jogo;
     }
 

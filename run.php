@@ -69,10 +69,10 @@ switch (trim($input)) {
         break;
     case 1:
         clearTerminal();
-        echo "\n\nDigite o número do jogo separado por traço: ";
+        echo "\n\nDigite o número do jogo separado por traço ex: 1-2-10...: ";
         $resp = removerQuebraLinha(inputResp());
         $calcule = new Calculation();
-        $calcule->unprecedented($resp);
+        echo $calcule->unprecedented($resp) == 0? 'Este jogo nunca saiu!': 'este jogo já saiu!';
         break;
     case 2:
         clearTerminal();
