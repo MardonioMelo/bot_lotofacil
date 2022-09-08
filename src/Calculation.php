@@ -159,7 +159,7 @@ class Calculation
      */
     public function withThe25()
     {
-        $print = "\nQuatro com os 25 resultados:\n";
+        $print = "\nQuadro com os 25 resultados:\n";
 
         for ($i = 1; $i <= 25; $i++) {
             $table_ref[$i] = $i;
@@ -168,13 +168,7 @@ class Calculation
         foreach ($this->dataset as $line) {
 
             $str = "";
-            foreach ($table_ref as $item_ref) {
-                // if (in_array($item_ref, $line)) {
-                //     $num = str_pad($item_ref, 2, '0', STR_PAD_LEFT);
-                //     $str .= " | {$num}";
-                // } else {
-                //     $str .= " | --";
-                // }
+            foreach ($table_ref as $item_ref) {  
 
                 if (in_array($item_ref, $line)) {
                     $num = str_pad($item_ref, 2, '0', STR_PAD_LEFT);
@@ -191,7 +185,7 @@ class Calculation
         fwrite($save_file, $print);
         fclose($save_file);
 
-        print_r("\nOs dados foram salvos no arquivo dataset_img.csv\n");
+        print_r("\nOs dados foram salvos no arquivo dataset_img\n");
     }
 
     /**
@@ -232,18 +226,20 @@ class Calculation
     }
 
     /**
-     * Obter uma fração dos ultimos concursos
+     * Obter uma fração dos últimos concursos
      *
      * @param integer $qtd
      * @return array
      */
     public function getLastGames(int $limit): array
     {
-        return array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
+        return $limit >= count($this->dataset) ?
+            $this->dataset :
+            array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
     }
 
     /**
-     * Verificar acertos referente ao proximo jogo de teste
+     * Verificar acertos referente ao próximo jogo de teste
      *
      * @param array $jogo
      * @return array

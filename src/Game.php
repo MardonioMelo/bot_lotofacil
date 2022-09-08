@@ -18,69 +18,18 @@ class Game
 
     /**
      * Play para gerar jogo
-     *
-     * @param boolean $test Informe true para prever o ultimo jogo que saiu ou false para prever o proximo jogo que não saiu
+     *  
      * @return void
      */
-    public function play($test = false): void
+    public function play(): void
     {
-        $this->test = $test;
         $jogo = $this->generateGame();
-        sort($jogo);
-
-        //Teste
-        if ($test) {
-            $last_games = $this->cal->getLastGames(1);
-            $inedito = $this->cal->unprecedented(implode("-", $jogo));
-            print_r("\n\n------------------------------------> \n");
-            print_r(" Análise para Teste\n");
-            print_r("------------------------------------> \n");
-            print_r('Inedito : ' . ($inedito == 0 ? 'Sim' : "Não ($inedito)") . "\n");
-            print_r('Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n");
-            print_r('Par     : ' . $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
-            print_r('Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n");
-            print_r('Total   : ' . count($jogo) . " (15)\n");
-            print_r('Previsto: ' . implode("-", $jogo) . "\n");
-            print_r('Correto : ' . implode("-", $last_games[array_key_last($last_games)]) . ' (' . (array_key_last($last_games) + 1) . ")\n");
-            print_r('Acertos : ' . implode("-", $this->cal->checkHits($jogo)) . ' (' . count($this->cal->checkHits($jogo)) . ")\n");
-        } else {
-            print_r("\n\n------------------\n Análise para Jogar \n------------------ \n");
-            print_r('Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n");
-            print_r('Par     : ' . $this->cal->qtdImparPar($jogo)['par'] . " (7)\n");
-            print_r('Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n");
-            print_r('Total   : ' . count($jogo) . " (15)\n");
-            print_r('Previsto: ' . implode("-", $jogo) . "\n");
-        }
-    }
-
-    public function generateGame2()
-    {
-        $wordlist = $this->playWordlist();       
-        $jogo = false;
-
-        if (!empty($wordlist)) {
-            foreach ($wordlist as $key => $item) {                  
-               $dezenas = explode(" ", trim($item));
-                
-                if(in_array("1", $dezenas)){
-                    $jogo = $dezenas;
-                }
-
-                if ($jogo) {                  
-                    break;
-                }
-            }
-            print_r($jogo);
-
-            $inedito = $this->cal->unprecedented(implode("-", $jogo));
-            print_r('Inedito : ' . ($inedito == 0 ? 'Sim' : "Não ($inedito)") . "\n");
-        } else {
-            print_r("Wordlist não existe ou não foi possivel carregar!");
-        }
+        $analysis = $this->analysis($jogo);
+        echo $analysis['log'];
     }
 
     /**
-     * Obter wordlist de todos os possiveis jogos
+     * Obter wordlist de todos os possíveis jogos
      *
      * @return array
      */
@@ -91,37 +40,9 @@ class Game
 
         if (file_exists($file)) {
             $arr = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            unset($arr[0]);          
+            unset($arr[0]);
         }
         return $arr;
-    }
-
-    /**
-     * Verificar intervalos
-     *
-     * @return void
-     */
-    public function checkInterval()
-    {
-        $this->test = false;
-        $qtd_analysis = 500;
-        $last_games = $this->cal->getLastGames($qtd_analysis + ($this->test ? 1 : 0));
-
-        $i = 1;
-        $arr = [];
-        foreach ($last_games as $key => $item) {
-            if ((int)$item[0] == 1) {
-                $i++;
-            } else {
-                $arr[$i] = empty($arr[$i]) ? 1 : $arr[$i] + 1;
-            }
-        }
-
-        foreach ($arr as $item) {
-            //  echo str_repeat("-", $item) . $item;
-            echo "-" . $item;
-        }
-        print_r(" | " . count($arr) / 3);
     }
 
     /**
@@ -134,17 +55,16 @@ class Game
      * @param integer $qtd_num_pri_ns Qtd de numeros primos que não saiu no ultimo sorteio
      * @return array
      */
-    private function generateGame($qtd_analysis = 30, $qtd_dez_last = 5, $qtd_num_plus = 3, $qtd_num_pri_s = 3, $qtd_num_pri_ns = 3): array
+    private function generateGame($qtd_analysis = 100, $qtd_dez_last = 5, $qtd_num_plus = 4, $qtd_num_pri_s = 5, $qtd_num_pri_ns = 6): array
     {
-
         $jogo = []; //jogo vazio
         $numPri = [2, 3, 5, 7, 11, 13, 17, 19, 23];
         $numPar = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
         $numImp = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25];
 
-        # Selecionar os ultimos concursos (analisar dezenas que saiu e dezenas mais atrasadas)
+        # Selecionar os últimos concursos (analisar dezenas que saiu e dezenas mais atrasadas)
         $last_games = $this->cal->getLastGames($qtd_analysis + ($this->test ? 1 : 0));
-        if ($this->test) unset($last_games[array_key_last($last_games)]);     
+        if ($this->test) unset($last_games[array_key_last($last_games)]);
 
         # Escolher as dezenas atrasadas de preferencia
         $laterNumbers = $this->cal->laterNumbers($last_games); //números mais atrasados     
@@ -158,7 +78,7 @@ class Game
             }
         }
 
-        # Os numeros mais sorteados nos ultimos concursos   
+        # Os números mais sorteados nos últimos concursos   
         $countFrequency = $this->cal->countFrequency($last_games); //frequencia das dezenas   
 
         # Adicionar n números mais sorteados
@@ -173,7 +93,7 @@ class Game
         # Selecione o ultimo concurso
         $endGame = end($last_games);
 
-        # Adicionar n números primos saido no ultimo concurso
+        # Adicionar n números primos que saiu no último concurso
         foreach ($numPri as $key => $item) {
 
             if (in_array($item, $endGame) && $qtd_num_pri_s > 0) {
@@ -204,16 +124,77 @@ class Game
         # Remover repetidas adicionadas
         $jogo = array_unique($jogo);
 
-        // $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola
+        # Escolher de 7 a 10 dezenas do concurso anterior, preferencia 9 dezenas
+        $yes = $not = [];
+        foreach ($jogo as $key => $item) {
+            if (in_array($item, $endGame)) {
+                $yes[] = $item;
+            } else {
+                $not[] = $item;
+            }
+        }
+        $n_yes = count($yes);
+        if($n_yes < 7){
+            $jogo[] = $not[rand(0, count($not)-1)];
+        }
+
+        # Escolher de 2 a 5 dezenas entre 20 e 25 ou escolher de 4 a 8 dezenas seguidas entre 1 a 10
 
 
-        # ----------------------------------Regras Não Aplicadas Ainda----------------------------------------->   
-
-        # escolher de 7 a 10 dezenas do concurso anterior, preferencia 9     
-        # não escolher mais que 8 dezenas seguidas 
-        # escolher de 2 a 5 dezenas entre 20 e 25 ou escolher de 4 a 8 dezenas seguidas entre 1 a 10
-        # não jogar jogo repetido  
+        # ----------------------------------Regras Não Aplicadas Ainda----------------------------------------->  
         # entre os números primos, 3 devem ter saido no ultimo concurso e 2 não     
+        # Verificar se cada bola estar entre o máximo e minimo de sua posição
+        //  $checkMaxMin = $this->cal->chackMaxMin($last_games); //max e min de cada bola, depois 
+        //  print_r($checkMaxMin);
+        # não escolher mais que 8 dezenas seguidas 
+        # não jogar jogo repetido  
+
+        sort($jogo);
         return $jogo;
+    }
+
+    /**
+     * Realizar analise do jogo
+     *
+     * @param string Jogo gerado com o método $this->generateGame()
+     * @return array
+     */
+    public function analysis($jogo): array
+    {
+        $result['log'] = '';
+        if ($this->test) {
+            $last_games = $this->cal->getLastGames(1);
+            $inedito = $this->cal->unprecedented(implode("-", $jogo));
+            $result['log'] .= "\n\n------------------------------------> \n";
+            $result['log'] .= " Análise para Teste\n";
+            $result['log'] .= "------------------------------------> \n";
+            $result['log'] .= 'Inedito : ' . ($inedito == 0 ? 'Sim' : "Não ($inedito)") . "\n";
+            $result['log'] .= 'Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n";
+            $result['log'] .= 'Par     : ' . $this->cal->qtdImparPar($jogo)['par'] . " (7)\n";
+            $result['log'] .= 'Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n";
+            $result['log'] .= 'Total   : ' . count($jogo) . " (15)\n";
+            $result['log'] .= 'Previsto: ' . implode("-", $jogo) . "\n";
+            $result['log'] .= 'Correto : ' . implode("-", $last_games[array_key_last($last_games)]) . ' (' . (array_key_last($last_games) + 1) . ")\n";
+            $result['log'] .= 'Acertos : ' . implode("-", $this->cal->checkHits($jogo)) . ' (' . count($this->cal->checkHits($jogo)) . ")\n";
+        } else {
+            $result['log'] .= "\n\n------------------\n Análise para Jogar \n------------------ \n";
+            $result['log'] .= 'Impar   : ' . $this->cal->qtdImparPar($jogo)['impar'] . " (8)\n";
+            $result['log'] .= 'Par     : ' . $this->cal->qtdImparPar($jogo)['par'] . " (7)\n";
+            $result['log'] .= 'Soma    : ' . $this->cal->sumDezene($jogo) . " (166 - 220)\n";
+            $result['log'] .= 'Total   : ' . count($jogo) . " (15)\n";
+            $result['log'] .= 'Previsto: ' . implode("-", $jogo) . "\n";
+        }
+        return $result;
+    }
+
+    /**
+     * Definir modo de teste.
+     * A analise será realizada com os jogos antes do ultimo jogo para prever o ultimo jogo que já saiu.
+     * 
+     * @return void
+     */
+    public function setModeTest()
+    {
+        $this->test = true;
     }
 }
