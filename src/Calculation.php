@@ -37,14 +37,21 @@ class Calculation
     /**
      * Verificar se um jogo é inédito
      *
+     * @param array $getDataSetString
      * @param array $game
-     * @return bool Retorna true se for inédito ou false 
+     * @param bool $test
+     * @return int Retorna 0 se for inédito ou o número do sorteio se ja saiu 
      */
-    public function unprecedented(array $game): bool
+    public function unprecedented(array $getDataSetString, array $game, bool $test = false): int
     {
         $result = 0;
         $game = trim(implode("-", $game));
-        $result = (in_array($game, $this->getDataSetString()) ? false : true);
+        if($test) array_pop($getDataSetString);
+
+        if(in_array($game, $getDataSetString)){
+            $result = array_flip($getDataSetString)[$game];
+        }
+
         return $result;
     }
 
@@ -220,7 +227,6 @@ class Calculation
         print_r("\nConsultando dados da API...");
 
         $last = file_get_contents('https://loteriascaixa-api.herokuapp.com/api/lotofacil');
-        $json = json_decode($last);
 
         print_r("\nSalvando os dados consultados...");
 
@@ -263,20 +269,17 @@ class Calculation
     /**
      * Verificar acertos referente ao próximo jogo de teste
      *
+     * @param array $endGame
      * @param array $jogo
-     * @return array
      */
-    public function checkHits(array $jogo): array
+    public function checkHits(array $endGame, array $jogo): array
     {
-        $last_games = $this->getLastGames(1);
         $hits = [];
-
-        foreach ($last_games[array_key_last($last_games)] as $item) {
+        foreach ($endGame as $item) {
             if (in_array($item, $jogo)) {
                 $hits[] = $item;
             }
         }
-
         return $hits;
     }
 
@@ -298,6 +301,7 @@ class Calculation
         $result['not_10_exist'] = [];
         $result['yes_prim_exist'] = [];
         $result['not_prim_exist'] = [];
+        $result['prim_exist'] = [];
 
         foreach ($range as $num) {
             if (in_array($num, $game)) {
@@ -314,10 +318,14 @@ class Calculation
 
                 if (in_array($num, $this->numPri) && !in_array($num, $endGame)) {
                     $result['not_prim_exist'][] = $num;
-                }               
+                }
+
+                if (in_array($num, $this->numPri)) {
+                    $result['prim_exist'][] = $num;
+                }
             }
         }
-        
+
         return $result;
     }
 
@@ -332,9 +340,11 @@ class Calculation
     public function checkParent(array $game, int $father, array $child): bool
     {
         $result = true;
-        if(in_array($father, $game)){
+        if (in_array($father, $game)) {
             $result = false;
-            foreach ($child as $num) { if(in_array($num, $game)) $result = true; }         
+            foreach ($child as $num) {
+                if (in_array($num, $game)) $result = true;
+            }
         }
         return $result;
     }

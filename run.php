@@ -6,6 +6,7 @@ use Src\Computer;
 use Src\Calculation;
 
 ini_set('memory_limit', -1);
+date_default_timezone_set('America/Sao_Paulo');
 
 //Limpar terminal
 function clearTerminal()
@@ -56,6 +57,7 @@ echo "\n 1 - Verificar se um número já foi jogado.";
 echo "\n 2 - Teste Jogar.";
 echo "\n 3 - Jogar.";
 echo "\n 4 - Gerar txt com a representação visual dos resultados.";
+echo "\n 5 - Atualizar Dataset.";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -72,7 +74,7 @@ switch (trim($input)) {
         echo "\n\nDigite o número do jogo separado por traço ex: 1-2-10...: ";
         $resp = explode('-', removerQuebraLinha(inputResp()));
         $calcule = new Calculation();
-        echo $calcule->unprecedented($resp) == 0? 'Este jogo nunca saiu!': 'este jogo já saiu!';
+        echo $calcule->unprecedented($this->cal->getDataSetString(), $resp) == 0? 'Este jogo nunca saiu!': 'este jogo já saiu!';
         break;
     case 2:
         clearTerminal();
@@ -89,6 +91,11 @@ switch (trim($input)) {
         clearTerminal();
         $game = new Calculation();
         $game->withThe25();
+        break;
+    case 5:
+        clearTerminal();
+        $game = new Calculation();
+        $game->updateDataset();
         break;
 
     default:
