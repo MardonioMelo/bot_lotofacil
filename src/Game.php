@@ -56,17 +56,24 @@ class Game
 
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
         $end = 1;
+        $end_wordlist = 0;
         for ($i = 0; $i < $end;) {
             $key = rand(1, $wordlist_count);
             $check_game = explode(' ', $wordlist[$key]);
             $checkAnalysis = $this->checkAnalysis($check_game, $last_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString);
             $countHits = count($this->cal->checkHits($endGame, $check_game));
-
-            echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis \n";       
+        
+           // echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis \n";       
             if ($checkAnalysis == 0) {
                 echo date("d/m/Y H:i:s") . " - ID do jogo: $key \n";
                 $jogo = $check_game;
                 echo date("d/m/Y H:i:s") . " - Acertos: $countHits \n";
+                $i++;
+            }
+
+            $end_wordlist++;
+            if($end_wordlist == $wordlist_count){
+                echo date("d/m/Y H:i:s") . " - Nenhum número da Wordlist corresponde ao esperado! \n";
                 $i++;
             }
         }
@@ -130,11 +137,11 @@ class Game
         # Deve ter ao menos uma das 4 dezenas mais atrasadas
         $laterNumbers = array_keys($laterNumbers);
         if (
-            !in_array($laterNumbers[4], $jogo)
-            && !in_array($laterNumbers[3], $jogo)
-            && !in_array($laterNumbers[2], $jogo)
+            !in_array($laterNumbers[0], $jogo)
             && !in_array($laterNumbers[1], $jogo)
-            && !in_array($laterNumbers[0], $jogo)
+            && !in_array($laterNumbers[2], $jogo)
+            && !in_array($laterNumbers[3], $jogo)
+            && !in_array($laterNumbers[4], $jogo)
         ) $result = 13;
         # Deve ter aos menos uma das 6 dezenas que mais são sorteadas
         $countFrequency = array_keys($countFrequency);
