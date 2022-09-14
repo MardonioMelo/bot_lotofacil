@@ -142,7 +142,7 @@ class Calculation
     }
 
     /**
-     *  Números mais atrasados
+     *  Números mais atrasados em ordem decrescente de atraso
      *
      * @param array $last_games
      * @return array
@@ -269,13 +269,13 @@ class Calculation
     /**
      * Verificar acertos referente ao próximo jogo de teste
      *
-     * @param array $endGame
+     * @param array $endGameTest
      * @param array $jogo
      */
-    public function checkHits(array $endGame, array $jogo): array
+    public function checkHits(array $endGameTest, array $jogo): array
     {
         $hits = [];
-        foreach ($endGame as $item) {
+        foreach ($endGameTest as $item) {
             if (in_array($item, $jogo)) {
                 $hits[] = $item;
             }
@@ -288,6 +288,7 @@ class Calculation
      * not_10_exist - Verificar quais das 10 dezenas que não saiu no concurso anterior e que existem no jogo atual
      * not_prim_exist - Verificar números primos que não saiu no ultimo concurso e existem no jogo atual
      * yes_prim_exist - Verificar números primos que saiu no ultimo concurso e existem no jogo atual
+     * prim_exist - Verificar números primos existentes no jogo atual
      *
      * @param array $endGame
      * @param array $jogo
@@ -346,6 +347,42 @@ class Calculation
                 if (in_array($num, $game)) $result = true;
             }
         }
+        return $result;
+    }
+
+    /**
+     * Verificar quais números dos mais atrasados que estão no jogo
+     *
+     * @param array $laterNumbers Array obtida com $this->cal->laterNumbers($last_games)
+     * @param array $game
+     * @param int $qtdNum Quantidade dos mais atrasados a verificar, a contar do primeiro atrasado.
+     * @return array Array com os números atrasados como chave e quantidade de repetição como valor
+     */
+    public function checkLaterNumInGame(array $laterNumbers, array $game, int $qtdNum = 10): array
+    {
+        $result = [];
+        $laterNumbers = array_slice($laterNumbers, 0, $qtdNum);
+        foreach ($laterNumbers as $num => $qtd) {
+            if (in_array($num, $game)) $result[$num] = $qtd;
+        }       
+        return $result;
+    }
+
+    /**
+     * Verificar quais números das mais sorteados que estão no jogo
+     *
+     * @param array $countFrequency Array obtida com $this->cal->countFrequency($last_games)
+     * @param array $game
+     * @param int $qtdFrequency Quantidade dos números das mais sorteados a verificar, a contar do primeiro com mais franqueia.
+     * @return array Array com os números atrasados como chave e quantidade de repetição como valor
+     */
+    public function checkFrequencyInGame(array $countFrequency, array $game, int $qtdNum = 15): array
+    {
+        $result = [];
+        $countFrequency = array_slice($countFrequency, 0, $qtdNum);
+        foreach ($countFrequency as $num => $qtd) {
+            if (in_array($num, $game)) $result[$num] = $qtd;
+        }       
         return $result;
     }
 
@@ -433,5 +470,25 @@ class Calculation
             unset($arr[0]);
         }
         return $arr;
+    }
+
+    /**
+     *  Verificar treinamento
+     *
+     * @param array $training array gerada com método $this->checkAnalysis()
+     * @return void
+     */
+    public function checkTraining(array $training)
+    {        
+        echo "---------Nome--------|Máx|Mín \n";
+
+        foreach ($training as $name => $arrTrain) {
+            echo str_pad($name, 20, '-', STR_PAD_RIGHT);
+            echo "|"; 
+            echo str_pad(max($arrTrain), 3, ' ', STR_PAD_LEFT);
+            echo "|"; 
+            echo str_pad(min($arrTrain), 3, ' ', STR_PAD_LEFT);
+            echo "\n"; 
+        }      
     }
 }

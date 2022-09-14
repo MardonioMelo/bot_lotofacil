@@ -11,6 +11,7 @@ class Game
     private $cal;
     private $test;
     private $qtd_analysis;
+    private $training;
 
     public function __construct()
     {
@@ -42,42 +43,58 @@ class Game
         $this->qtd_analysis = $qtd_analysis;
 
         // Selecionar os últimos concursos 
-        $last_games = $this->cal->getLastGames($qtd_analysis + ($this->test ? 1 : 0));
-        if ($this->test) array_pop($last_games);
+        $last_games = $this->cal->getLastGames($qtd_analysis);
+        if ($this->test) {
+            $endGameTest = end($last_games);
+            array_pop($last_games);
+        }
 
         // Variáveis auxiliares para analise
         $wordlist = $this->cal->getWordlist();
         $wordlist_count = count($wordlist);
-        $last_games = $this->cal->getLastGames($this->qtd_analysis);
         $laterNumbers = $this->cal->laterNumbers($last_games);
         $countFrequency = $this->cal->countFrequency($last_games);
-        $endGame = end($last_games);
         $getDataSetString = $this->cal->getDataSetString();
+        $endGame = end($last_games);
 
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
         $end = 1;
         $end_wordlist = 0;
         for ($i = 0; $i < $end;) {
+            $end_wordlist++;
             $key = rand(1, $wordlist_count);
             $check_game = explode(' ', $wordlist[$key]);
             $checkAnalysis = $this->checkAnalysis($check_game, $last_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString);
-            $countHits = count($this->cal->checkHits($endGame, $check_game));
-        
-           // echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis \n";       
-            if ($checkAnalysis == 0) {
-                echo date("d/m/Y H:i:s") . " - ID do jogo: $key \n";
-                $jogo = $check_game;
-                echo date("d/m/Y H:i:s") . " - Acertos: $countHits \n";
-                $i++;
+
+            if ($this->test) {
+                $countHits = count($this->cal->checkHits($endGameTest, $check_game));
+                $this->training['countHits'][] = $countHits;
+                $this->training['checkAnalysis'][] = $checkAnalysis;
+
+                // echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis \n";
+                if ($checkAnalysis == 0 && $countHits == 13) {
+                    echo date("d/m/Y H:i:s") . " - ID do jogo: $key \n";
+                    $jogo = $check_game;
+                    $i++;
+                }
+            } else {
+                if ($checkAnalysis == 0) {
+                    echo date("d/m/Y H:i:s") . " - ID do jogo: $key \n";
+                    $jogo = $check_game;
+                    $i++;
+                }
             }
 
-            $end_wordlist++;
-            if($end_wordlist == $wordlist_count){
+            if ($end_wordlist == $wordlist_count) {
                 echo date("d/m/Y H:i:s") . " - Nenhum número da Wordlist corresponde ao esperado! \n";
                 $i++;
             }
         }
         echo date("d/m/Y H:i:s") . " - Fim da busca na Wordlist. \n";
+
+        //Verificar treinamento
+        if ($this->test) $this->cal->checkTraining($this->training);
+
 
         return $jogo;
     }
@@ -100,18 +117,21 @@ class Game
         # Avaliações básicas para considerar o jogo valido
         # ------------------------------------------------->
         # O jogo deve ser inédito
-        if ($this->cal->unprecedented($getDataSetString, $jogo, $this->test) > 0) $result = 1;
+        $unprecedented = $this->cal->unprecedented($getDataSetString, $jogo, $this->test);
+        if ($unprecedented > 0) $result = 1;
         # As dezenas devem estar dentro do máximo e mínimo para cada posição  
-        if (count($this->cal->checkMaxMinGame($last_games, $jogo)) > 0) $result = 2;
+        $checkMaxMinGame = count($this->cal->checkMaxMinGame($last_games, $jogo));
+        if ($checkMaxMinGame > 0) $result = 2;
         # A soma das dezenas devem estar entre 166 e 220   
         $sumDezene = $this->cal->sumDezene($jogo);
         if ($sumDezene < 166 || $sumDezene > 220) $result = 3;
         # O jogo deve ter em media 7 dezenas impares
         $qtdImparPar = $this->cal->qtdImparPar($jogo);
-        if ($qtdImparPar['par'] < 5 || $qtdImparPar['par'] > 9) $result = 4;
+        $qtdPar = $qtdImparPar['par'];
+        if ($qtdPar < 6 || $qtdPar > 7) $result = 4;
         # O jogo deve ter em media 8 dezenas pares
-        if ($qtdImparPar['impar'] < 6 || $qtdImparPar['impar'] > 10) $result = 5;
-
+        $qtdImpar = $qtdImparPar['impar'];
+        if ($qtdImpar < 8 || $qtdImpar > 9) $result = 5;
         # ------------------------------------------------->
         # Considerar algumas avaliações como critério de desempate 
         # Considerar outras avaliações com pesos diferentes conforme grau de importância e q mais se aproxime do objetivo
@@ -124,38 +144,42 @@ class Game
         $not_10_exist = count($checkPreviousExist['not_10_exist']);
         if ($not_10_exist < 5 || $not_10_exist > 7) $result = 7;
         # Deve ter no mínimo 3 números primos que saiu no último concurso
-        if (count($checkPreviousExist['yes_prim_exist']) >= 3) $result = 8;
+        $yes_prim_exist = count($checkPreviousExist['yes_prim_exist']);
+        if ($yes_prim_exist >= 3) $result = 8;
         # Deve ter no mínimo 2 números primos que não saiu no ultimo concurso
-        if (count($checkPreviousExist['not_prim_exist']) >= 2) $result = 9;
+        $not_prim_exist = count($checkPreviousExist['not_prim_exist']);
+        if ($not_prim_exist >= 2) $result = 9;
         # Deve ter de 5 a 7 números primos
         $prim_exist = count($checkPreviousExist['prim_exist']);
-        if ($prim_exist < 5 || $prim_exist > 7) $result = 10;
+        $result = ($prim_exist < 5 && $prim_exist > 7 ? 10 : 0);
         # Se tiver o número 1, deve ter ao menos o número 2, 3 ou 4.
-        if ($this->cal->checkParent($jogo, 1, [2, 3, 4]) == false) $result = 11;
+        $checkParent1 = $this->cal->checkParent($jogo, 1, [2, 3, 4]);
+        if ($checkParent1 == false) $result = 11;
         # Se tiver o número 15, deve ter ao menos o número 22, 23, 24 ou 25.
-        if ($this->cal->checkParent($jogo, 15, [22, 23, 24, 25]) == false) $result = 12;
+        $checkParent15 = $this->cal->checkParent($jogo, 15, [22, 23, 24, 25]);
+        if ($checkParent15 == false) $result = 12;
         # Deve ter ao menos uma das 4 dezenas mais atrasadas
-        $laterNumbers = array_keys($laterNumbers);
-        if (
-            !in_array($laterNumbers[0], $jogo)
-            && !in_array($laterNumbers[1], $jogo)
-            && !in_array($laterNumbers[2], $jogo)
-            && !in_array($laterNumbers[3], $jogo)
-            && !in_array($laterNumbers[4], $jogo)
-        ) $result = 13;
+        $checkLaterNumInGame = count($this->cal->checkLaterNumInGame($laterNumbers, $jogo, 4));
+        if ($checkLaterNumInGame == 0) $result = 13;
         # Deve ter aos menos uma das 6 dezenas que mais são sorteadas
-        $countFrequency = array_keys($countFrequency);
-        if (
-            !in_array($countFrequency[0], $jogo)
-            && !in_array($countFrequency[1], $jogo)
-            && !in_array($countFrequency[2], $jogo)
-            && !in_array($countFrequency[3], $jogo)
-            && !in_array($countFrequency[4], $jogo)
-            && !in_array($countFrequency[5], $jogo)
-        ) $result = 14;
-
-        # Não pode ter mais que 8 dezenas seguidas 
-        // Falta verificar  
+        $checkFrequencyInGame = count($this->cal->checkFrequencyInGame($countFrequency, $jogo, 6));
+        if ($checkFrequencyInGame == 0) $result = 14;
+        # ------------------------------------------------->
+        # Guardar resultado da avaliação como treino
+        # ------------------------------------------------->
+        $this->training['unprecedented'][] = $unprecedented;
+        $this->training['checkMaxMinGame'][] = $checkMaxMinGame;
+        $this->training['sumDezene'][] = $sumDezene;
+        $this->training['qtdPar'][] = $qtdPar;
+        $this->training['qtdImpar'][] = $qtdImpar;
+        $this->training['yes_15_exist'][] = $yes_15_exist;
+        $this->training['not_10_exist'][] = $not_10_exist;
+        $this->training['not_prim_exist'][] = $not_prim_exist;
+        $this->training['prim_exist'][] = $prim_exist;
+        $this->training['checkParent1'][] = $checkParent1;
+        $this->training['checkParent15'][] = $checkParent15;
+        $this->training['checkLaterNumInGame'][] = $checkLaterNumInGame;
+        $this->training['checkFrequencyInGame'][] = $checkFrequencyInGame;
 
         return $result;
     }
@@ -173,8 +197,8 @@ class Game
             $last_games = $this->cal->getLastGames($this->qtd_analysis);
             $inedito = $this->cal->unprecedented($this->cal->getDataSetString(), $jogo);
             $checkMaxMin = $this->cal->checkMaxMinGame($last_games, $jogo);
-            $endGame = end($last_games);
-            $checkHits = $this->cal->checkHits($endGame, $jogo);
+            $endGameTest = end($last_games);
+            $checkHits = $this->cal->checkHits($endGameTest, $jogo);
             $result['log'] .= "\n\n------------------------------------> \n";
             $result['log'] .= " Análise para Teste\n";
             $result['log'] .= "------------------------------------> \n";
