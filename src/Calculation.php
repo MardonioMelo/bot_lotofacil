@@ -8,6 +8,7 @@ class Calculation
     private $dataset;
     private $file_dataset;
     private $numPri;
+    private $training;
 
     /**
      * Construção
@@ -46,9 +47,9 @@ class Calculation
     {
         $result = 0;
         $game = trim(implode("-", $game));
-        if($test) array_pop($getDataSetString);
+        if ($test) array_pop($getDataSetString);
 
-        if(in_array($game, $getDataSetString)){
+        if (in_array($game, $getDataSetString)) {
             $result = array_flip($getDataSetString)[$game];
         }
 
@@ -266,6 +267,30 @@ class Calculation
             array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
     }
 
+   /**
+     * Consultar quantidade total de concursos
+     *
+     * @param integer $qtd
+     * @return array
+     */
+    public function getQtdTotalGames(): int
+    {
+        return count($this->dataset);           
+    }
+
+    /**
+     * Consultar todos os jogos dos concursos anteriores
+     *
+     * @param boolean $test
+     * @return array
+     */
+    public function allPreviousGames(bool $test = false): array
+    {
+        $all = $this->dataset;
+        if($test) array_pop($all);
+        return $all;
+    }
+
     /**
      * Verificar acertos referente ao próximo jogo de teste
      *
@@ -364,7 +389,7 @@ class Calculation
         $laterNumbers = array_slice($laterNumbers, 0, $qtdNum);
         foreach ($laterNumbers as $num => $qtd) {
             if (in_array($num, $game)) $result[$num] = $qtd;
-        }       
+        }
         return $result;
     }
 
@@ -382,7 +407,7 @@ class Calculation
         $countFrequency = array_slice($countFrequency, 0, $qtdNum);
         foreach ($countFrequency as $num => $qtd) {
             if (in_array($num, $game)) $result[$num] = $qtd;
-        }       
+        }
         return $result;
     }
 
@@ -475,20 +500,118 @@ class Calculation
     /**
      *  Verificar treinamento
      *
-     * @param array $training array gerada com método $this->checkAnalysis()
+     * @param array $training array gerada com método $this->trainingMargin()
+     * @param int $modo Modo de exibição dos dados
      * @return void
      */
-    public function checkTraining(array $training)
-    {        
-        echo "---------Nome--------|Máx|Mín \n";
+    public function checkTraining(array $training = [], int $modo = 1)
+    {
+        $training = empty($training) ? $this->training : $training;
 
-        foreach ($training as $name => $arrTrain) {
-            echo str_pad($name, 20, '-', STR_PAD_RIGHT);
-            echo "|"; 
-            echo str_pad(max($arrTrain), 3, ' ', STR_PAD_LEFT);
-            echo "|"; 
-            echo str_pad(min($arrTrain), 3, ' ', STR_PAD_LEFT);
-            echo "\n"; 
-        }      
+        if($modo == 1){
+            echo "\n---------------Margens-----------|";
+            echo "\n------Parâmetro-----|Mín|Máx|Méd \n";
+            foreach ($training as $name => $arrTrain) {
+                echo str_pad($name, 20, '-', STR_PAD_RIGHT);
+                echo "|";
+                echo str_pad($arrTrain['min'], 3, ' ', STR_PAD_LEFT);
+                echo "|";
+                echo str_pad($arrTrain['max'], 3, ' ', STR_PAD_LEFT);
+                echo "|";
+                echo str_pad($arrTrain['med'], 3, ' ', STR_PAD_LEFT);
+                echo "\n";
+            }
+            echo "---------------------------------| \n";
+        }elseif($modo == 2){
+            echo "\n----------Margens---------|";
+            echo "\n------Parâmetro-----|Total \n";
+            foreach ($training as $name => $arrTrain) {
+                echo str_pad($name, 20, '-', STR_PAD_RIGHT);
+                echo "|";
+                echo str_pad($arrTrain['analysis'], 3, ' ', STR_PAD_LEFT);             
+                echo "\n";
+            }
+            echo "---------------------------| \n";
+        }       
     }
+
+    /**
+     * Verificar margens para analises posterior 
+     *
+     * @param integer $qtd_analysis
+     * @param boolean $test
+     * @return void
+     */
+    public function trainingMargin(int $qtd_analysis = 10, bool $test = false): void
+    {
+        $games = $this->getLastGames($qtd_analysis);
+        if ($test == true) array_pop($games);
+        $endGame = end($games);
+        $laterNumbers = $this->laterNumbers($games);
+        $countFrequency = $this->countFrequency($games);
+        $this->training = $training = [];
+
+        foreach ($games as $jogo) {
+
+            # A soma das dezenas
+            $sumDezene = $this->sumDezene($jogo);
+
+            $qtdImparPar = $this->qtdImparPar($jogo);
+            # Dezenas impares
+            $qtdPar = $qtdImparPar['par'];
+            # Dezenas pares
+            $qtdImpar = $qtdImparPar['impar'];
+
+            $checkPreviousExist = $this->checkPreviousExist($endGame, $jogo);
+            # Dezenas que saiu no concurso anterior
+            $yes_15_exist = count($checkPreviousExist['yes_15_exist']);
+            # Dezenas das 10 que não saiu no concurso anterior
+            $not_10_exist = count($checkPreviousExist['not_10_exist']);
+            # Números primos que saiu no último concurso
+            $yes_prim_exist = count($checkPreviousExist['yes_prim_exist']);
+            # Números primos que não saiu no ultimo concurso
+            $not_prim_exist = count($checkPreviousExist['not_prim_exist']);
+
+            # Números primos
+            $prim_exist = count($checkPreviousExist['prim_exist']);
+
+            # Dezenas das 5 mais atrasadas
+            $checkLaterNumInGame = count($this->checkLaterNumInGame($laterNumbers, $jogo, 4));
+
+            # Dezenas das 5 que mais são sorteadas
+            $checkFrequencyInGame = count($this->checkFrequencyInGame($countFrequency, $jogo, 8));
+
+            // Guardar resultado da avaliação como treino         
+            $training['sumDezene'][] = $sumDezene;
+            $training['qtdPar'][] = $qtdPar;
+            $training['qtdImpar'][] = $qtdImpar;
+            $training['yes_15_exist'][] = $yes_15_exist;
+            $training['not_10_exist'][] = $not_10_exist;
+            $training['yes_prim_exist'][] = $yes_prim_exist;
+            $training['not_prim_exist'][] = $not_prim_exist;
+            $training['prim_exist'][] = $prim_exist;
+            $training['checkLaterNumInGame'][] = $checkLaterNumInGame;
+            $training['checkFrequencyInGame'][] = $checkFrequencyInGame;
+        }
+
+        // Guardar resultado da avaliação como treino       
+        foreach ($training as $name => $arrTrain) {
+            $this->training[$name]['min'] = min($arrTrain);
+            $this->training[$name]['max'] = max($arrTrain);
+            $this->training[$name]['med'] = (int) (array_sum($arrTrain) / count($arrTrain));
+        }
+    }
+
+    /**
+     * Consultar dados do treinamento
+     * Execute o método $this->cal->trainingMargin() para carregar o treinamento
+     *
+     * @return array
+     */
+    public function getTraining(): array
+    {
+        return $this->training;
+    }
+
+
 }

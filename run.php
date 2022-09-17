@@ -54,10 +54,11 @@ function removerQuebraLinha($str)
 
 echo "\n Escolha uma opção:";
 echo "\n 1 - Verificar se um número já foi jogado.";
-echo "\n 2 - Teste Jogar.";
+echo "\n 2 - Jogar em modo teste.";
 echo "\n 3 - Jogar.";
 echo "\n 4 - Gerar txt com a representação visual dos resultados.";
 echo "\n 5 - Atualizar Dataset.";
+echo "\n 6 - Jogar em modo teste múltiplas vzs.";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -96,6 +97,12 @@ switch (trim($input)) {
         clearTerminal();
         $game = new Calculation();
         $game->updateDataset();
+        break;
+    case 6:
+        clearTerminal();
+        $game = new Game();
+        $game->setModeTest();
+        $game->generateGameMulti();
         break;
 
     default:
