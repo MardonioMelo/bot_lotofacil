@@ -4,6 +4,7 @@ require __DIR__ . './vendor/autoload.php';
 use Src\Game;
 use Src\Computer;
 use Src\Calculation;
+use Src\Helper;
 
 ini_set('memory_limit', -1);
 date_default_timezone_set('America/Sao_Paulo');
@@ -51,7 +52,7 @@ function removerQuebraLinha($str)
 };
 
 # --------------------------------------------------
-
+echo Helper::title('GERADOR DE JOGO PARA LOTOFACIL');
 echo "\n Escolha uma opção:";
 echo "\n 1 - Verificar se um número já foi jogado.";
 echo "\n 2 - Jogar em modo teste.";
@@ -62,44 +63,52 @@ echo "\n 6 - Jogar em modo teste múltiplas vzs.";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
+$title = 'GERADOR DE JOGO PARA LOTOFACIL';
 
 switch (trim($input)) {
 
     case 0:
         # Cancelar
         clearTerminal();
-        echo "\nCancelado!";
+        echo Helper::title($title);
+        echo "\nCancelado!\n";
         break;
     case 1:
         clearTerminal();
+        echo Helper::title($title);
         echo "\n\nDigite o número do jogo separado por traço ex: 1-2-10...: ";
         $resp = explode('-', removerQuebraLinha(inputResp()));
         $calcule = new Calculation();
-        echo $calcule->unprecedented($this->cal->getDataSetString(), $resp) == 0? 'Este jogo nunca saiu!': 'este jogo já saiu!';
+        echo ($calcule->unprecedented($this->cal->getDataSetString(), $resp) == 0 ? 'Este jogo nunca saiu!' : 'este jogo já saiu!');
         break;
     case 2:
         clearTerminal();
+        echo Helper::title($title);
         $game = new Game();
         $game->setModeTest();
         $game->play();
         break;
     case 3:
         clearTerminal();
+        echo Helper::title($title);
         $game = new Game();
         $game->play();
         break;
     case 4:
         clearTerminal();
+        echo Helper::title($title);
         $game = new Calculation();
         $game->withThe25();
         break;
     case 5:
         clearTerminal();
+        echo Helper::title($title);
         $game = new Calculation();
         $game->updateDataset();
         break;
     case 6:
         clearTerminal();
+        echo Helper::title($title);
         $game = new Game();
         $game->setModeTest();
         $game->generateGameMulti();

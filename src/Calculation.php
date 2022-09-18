@@ -9,6 +9,7 @@ class Calculation
     private $file_dataset;
     private $numPri;
     private $training;
+    private $prime_20;
 
     /**
      * Construção
@@ -17,6 +18,7 @@ class Calculation
     public function __construct()
     {
         $this->numPri = [2, 3, 5, 7, 11, 13, 17, 19, 23];
+        $this->prime_20 = [1, 2, 3, 4, 6, 9, 10, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25];
         $this->file_dataset = "./dataset.json";
 
         if (!file_exists($this->file_dataset)) {
@@ -314,6 +316,7 @@ class Calculation
      * not_prim_exist - Verificar números primos que não saiu no ultimo concurso e existem no jogo atual
      * yes_prim_exist - Verificar números primos que saiu no ultimo concurso e existem no jogo atual
      * prim_exist - Verificar números primos existentes no jogo atual
+     * prime_20 - Verificar qual números estão no jogo de 20 números que mais pontuou
      *
      * @param array $endGame
      * @param array $jogo
@@ -328,6 +331,7 @@ class Calculation
         $result['yes_prim_exist'] = [];
         $result['not_prim_exist'] = [];
         $result['prim_exist'] = [];
+        $result['prime_20'] = [];
 
         foreach ($range as $num) {
             if (in_array($num, $game)) {
@@ -348,6 +352,10 @@ class Calculation
 
                 if (in_array($num, $this->numPri)) {
                     $result['prim_exist'][] = $num;
+                }
+
+                if (in_array($num, $this->prime_20)) {
+                    $result['prime_20'][] = $num;
                 }
             }
         }
@@ -383,7 +391,7 @@ class Calculation
      * @param int $qtdNum Quantidade dos mais atrasados a verificar, a contar do primeiro atrasado.
      * @return array Array com os números atrasados como chave e quantidade de repetição como valor
      */
-    public function checkLaterNumInGame(array $laterNumbers, array $game, int $qtdNum = 10): array
+    public function checkLaterNumInGame(array $laterNumbers, array $game, int $qtdNum = 4): array
     {
         $result = [];
         $laterNumbers = array_slice($laterNumbers, 0, $qtdNum);
@@ -401,7 +409,7 @@ class Calculation
      * @param int $qtdFrequency Quantidade dos números das mais sorteados a verificar, a contar do primeiro com mais franqueia.
      * @return array Array com os números atrasados como chave e quantidade de repetição como valor
      */
-    public function checkFrequencyInGame(array $countFrequency, array $game, int $qtdNum = 15): array
+    public function checkFrequencyInGame(array $countFrequency, array $game, int $qtdNum = 5): array
     {
         $result = [];
         $countFrequency = array_slice($countFrequency, 0, $qtdNum);
@@ -498,44 +506,6 @@ class Calculation
     }
 
     /**
-     *  Verificar treinamento
-     *
-     * @param array $training array gerada com método $this->trainingMargin()
-     * @param int $modo Modo de exibição dos dados
-     * @return void
-     */
-    public function checkTraining(array $training = [], int $modo = 1)
-    {
-        $training = empty($training) ? $this->training : $training;
-
-        if($modo == 1){
-            echo "\n---------------Margens-----------|";
-            echo "\n------Parâmetro-----|Mín|Máx|Méd \n";
-            foreach ($training as $name => $arrTrain) {
-                echo str_pad($name, 20, '-', STR_PAD_RIGHT);
-                echo "|";
-                echo str_pad($arrTrain['min'], 3, ' ', STR_PAD_LEFT);
-                echo "|";
-                echo str_pad($arrTrain['max'], 3, ' ', STR_PAD_LEFT);
-                echo "|";
-                echo str_pad($arrTrain['med'], 3, ' ', STR_PAD_LEFT);
-                echo "\n";
-            }
-            echo "---------------------------------| \n";
-        }elseif($modo == 2){
-            echo "\n----------Margens---------|";
-            echo "\n------Parâmetro-----|Total \n";
-            foreach ($training as $name => $arrTrain) {
-                echo str_pad($name, 20, '-', STR_PAD_RIGHT);
-                echo "|";
-                echo str_pad($arrTrain['analysis'], 3, ' ', STR_PAD_LEFT);             
-                echo "\n";
-            }
-            echo "---------------------------| \n";
-        }       
-    }
-
-    /**
      * Verificar margens para analises posterior 
      *
      * @param integer $qtd_analysis
@@ -571,15 +541,17 @@ class Calculation
             $yes_prim_exist = count($checkPreviousExist['yes_prim_exist']);
             # Números primos que não saiu no ultimo concurso
             $not_prim_exist = count($checkPreviousExist['not_prim_exist']);
+            # Números que estão no jogo de 20 números q mais pontuou
+            $prime_20 = count($checkPreviousExist['prime_20']);    
 
             # Números primos
             $prim_exist = count($checkPreviousExist['prim_exist']);
 
             # Dezenas das 5 mais atrasadas
-            $checkLaterNumInGame = count($this->checkLaterNumInGame($laterNumbers, $jogo, 4));
+            $checkLaterNumInGame = count($this->checkLaterNumInGame($laterNumbers, $jogo));
 
             # Dezenas das 5 que mais são sorteadas
-            $checkFrequencyInGame = count($this->checkFrequencyInGame($countFrequency, $jogo, 8));
+            $checkFrequencyInGame = count($this->checkFrequencyInGame($countFrequency, $jogo));
 
             // Guardar resultado da avaliação como treino         
             $training['sumDezene'][] = $sumDezene;
@@ -589,6 +561,7 @@ class Calculation
             $training['not_10_exist'][] = $not_10_exist;
             $training['yes_prim_exist'][] = $yes_prim_exist;
             $training['not_prim_exist'][] = $not_prim_exist;
+            $training['prime_20'][] = $prime_20;
             $training['prim_exist'][] = $prim_exist;
             $training['checkLaterNumInGame'][] = $checkLaterNumInGame;
             $training['checkFrequencyInGame'][] = $checkFrequencyInGame;
@@ -612,6 +585,4 @@ class Calculation
     {
         return $this->training;
     }
-
-
 }

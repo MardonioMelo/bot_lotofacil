@@ -17,7 +17,13 @@ Acertos | Chance <br>
 12 n.   | 1/59  <br>
 11 n.   | 1/11  <br>
 
-> Nuca saiu uma jogo repetido de 15 números
+### Como usar o programa
+
+Este programa é executado em linha de comando, para ver as opções execute o comando na pasta raiz:
+> php run.php
+
+Escolha a opção para atualizar o banco de dados antes de executar as opções de gerar jogo.
+
 
 ### Wordlist
 
