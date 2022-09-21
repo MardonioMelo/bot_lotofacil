@@ -1,4 +1,5 @@
 vendor/
 dataset.json
 wordlist_lotofacil.txt
-dataset_img.txt
+img25.txt
+position.txt

@@ -55,4 +55,19 @@ class Helper
         }       
     }
 
+    /**
+     * Salvar dados em um arquivo
+     *
+     * @param string $file Nome do arquivo com caminho e extensão
+     * @param string $content Conteúdo do arquivo
+     * @param string $modo Modo de escrita
+     * @return void
+     */
+    public static function saveFile($file, $content, $modo = "w+"): void
+    {
+        $save_file = fopen($file, $modo);
+        fwrite($save_file, $content);
+        fclose($save_file);
+    }
+
 }

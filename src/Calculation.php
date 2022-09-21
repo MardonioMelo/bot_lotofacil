@@ -191,7 +191,7 @@ class Calculation
      */
     public function withThe25()
     {
-        $print = "\nQuadro com os 25 resultados:\n";
+        $content = [];
 
         for ($i = 1; $i <= 25; $i++) {
             $table_ref[$i] = $i;
@@ -199,23 +199,21 @@ class Calculation
 
         foreach ($this->dataset as $line) {
 
-            $str = "";
+            $str = [];
             foreach ($table_ref as $item_ref) {
 
                 if (in_array($item_ref, $line)) {
                     $num = str_pad($item_ref, 2, '0', STR_PAD_LEFT);
-                    $str .= " 0 ";
+                    $str[] = "0";
                 } else {
-                    $str .= "   ";
+                    $str[] = " ";
                 }
             }
 
-            $print .= "\n {$str}";
+            $content[] = implode(" ", $str);
         }
 
-        $save_file = fopen("./dataset_img.txt", "w+");
-        fwrite($save_file, $print);
-        fclose($save_file);
+        Helper::saveFile("./img25.txt", implode("\n", $content));
 
         print_r("\nOs dados foram salvos no arquivo dataset_img\n");
     }
@@ -228,15 +226,9 @@ class Calculation
     public function updateDataset()
     {
         print_r("\nConsultando dados da API...");
-
         $last = file_get_contents('https://loteriascaixa-api.herokuapp.com/api/lotofacil');
-
         print_r("\nSalvando os dados consultados...");
-
-        $save_file = fopen($this->file_dataset, "w+");
-        fwrite($save_file, $last);
-        fclose($save_file);
-
+        Helper::saveFile($this->file_dataset, $last);
         print_r("\nBase de dados atualizada!\n");
     }
 
@@ -269,7 +261,7 @@ class Calculation
             array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
     }
 
-   /**
+    /**
      * Consultar quantidade total de concursos
      *
      * @param integer $qtd
@@ -277,7 +269,7 @@ class Calculation
      */
     public function getQtdTotalGames(): int
     {
-        return count($this->dataset);           
+        return count($this->dataset);
     }
 
     /**
@@ -289,7 +281,7 @@ class Calculation
     public function allPreviousGames(bool $test = false): array
     {
         $all = $this->dataset;
-        if($test) array_pop($all);
+        if ($test) array_pop($all);
         return $all;
     }
 
@@ -317,12 +309,14 @@ class Calculation
      * yes_prim_exist - Verificar números primos que saiu no ultimo concurso e existem no jogo atual
      * prim_exist - Verificar números primos existentes no jogo atual
      * prime_20 - Verificar qual números estão no jogo de 20 números que mais pontuou
+     * num_exist - Verificar se existem outros números específicos
      *
      * @param array $endGame
      * @param array $jogo
+     * @param array $exist
      * @return array
      */
-    public function checkPreviousExist(array $endGame, array $game): array
+    public function checkPreviousExist(array $endGame, array $game, array $exist = []): array
     {
         $result = [];
         $range = range(1, 25);
@@ -332,6 +326,7 @@ class Calculation
         $result['not_prim_exist'] = [];
         $result['prim_exist'] = [];
         $result['prime_20'] = [];
+        $result['num_exist'] = [];
 
         foreach ($range as $num) {
             if (in_array($num, $game)) {
@@ -356,6 +351,10 @@ class Calculation
 
                 if (in_array($num, $this->prime_20)) {
                     $result['prime_20'][] = $num;
+                }
+
+                if (in_array($num, $exist)) {
+                    $result['num_exist'][] = $num;
                 }
             }
         }
@@ -406,10 +405,10 @@ class Calculation
      *
      * @param array $countFrequency Array obtida com $this->cal->countFrequency($last_games)
      * @param array $game
-     * @param int $qtdFrequency Quantidade dos números das mais sorteados a verificar, a contar do primeiro com mais franqueia.
+     * @param int $qtdNum Quantidade dos números das mais sorteados a verificar, a contar do primeiro com mais frequência.
      * @return array Array com os números atrasados como chave e quantidade de repetição como valor
      */
-    public function checkFrequencyInGame(array $countFrequency, array $game, int $qtdNum = 5): array
+    public function checkFrequencyInGame(array $countFrequency, array $game, int $qtdNum = 4): array
     {
         $result = [];
         $countFrequency = array_slice($countFrequency, 0, $qtdNum);
@@ -512,59 +511,59 @@ class Calculation
      * @param boolean $test
      * @return void
      */
-    public function trainingMargin(int $qtd_analysis = 10, bool $test = false): void
+    public function trainingMargin(array $games): void
     {
-        $games = $this->getLastGames($qtd_analysis);
-        if ($test == true) array_pop($games);
-        $endGame = end($games);
         $laterNumbers = $this->laterNumbers($games);
         $countFrequency = $this->countFrequency($games);
         $this->training = $training = [];
 
-        foreach ($games as $jogo) {
+        foreach ($games as $key => $jogo) {
+       
+            if (!empty($games[$key - 1])) {
 
-            # A soma das dezenas
-            $sumDezene = $this->sumDezene($jogo);
+                # A soma das dezenas
+                $sumDezene = $this->sumDezene($jogo);
 
-            $qtdImparPar = $this->qtdImparPar($jogo);
-            # Dezenas impares
-            $qtdPar = $qtdImparPar['par'];
-            # Dezenas pares
-            $qtdImpar = $qtdImparPar['impar'];
+                $qtdImparPar = $this->qtdImparPar($jogo);
+                # Dezenas impares
+                $qtdPar = $qtdImparPar['par'];
+                # Dezenas pares
+                $qtdImpar = $qtdImparPar['impar'];
 
-            $checkPreviousExist = $this->checkPreviousExist($endGame, $jogo);
-            # Dezenas que saiu no concurso anterior
-            $yes_15_exist = count($checkPreviousExist['yes_15_exist']);
-            # Dezenas das 10 que não saiu no concurso anterior
-            $not_10_exist = count($checkPreviousExist['not_10_exist']);
-            # Números primos que saiu no último concurso
-            $yes_prim_exist = count($checkPreviousExist['yes_prim_exist']);
-            # Números primos que não saiu no ultimo concurso
-            $not_prim_exist = count($checkPreviousExist['not_prim_exist']);
-            # Números que estão no jogo de 20 números q mais pontuou
-            $prime_20 = count($checkPreviousExist['prime_20']);    
+                $checkPreviousExist = $this->checkPreviousExist($games[$key - 1], $jogo);
+                # Dezenas que saiu no concurso anterior
+                $yes_15_exist = count($checkPreviousExist['yes_15_exist']);
+                # Dezenas das 10 que não saiu no concurso anterior
+                $not_10_exist = count($checkPreviousExist['not_10_exist']);
+                # Números primos que saiu no último concurso
+                $yes_prim_exist = count($checkPreviousExist['yes_prim_exist']);
+                # Números primos que não saiu no ultimo concurso
+                $not_prim_exist = count($checkPreviousExist['not_prim_exist']);
+                # Números que estão no jogo de 20 números q mais pontuou
+                $prime_20 = count($checkPreviousExist['prime_20']);
 
-            # Números primos
-            $prim_exist = count($checkPreviousExist['prim_exist']);
+                # Números primos
+                $prim_exist = count($checkPreviousExist['prim_exist']);
 
-            # Dezenas das 5 mais atrasadas
-            $checkLaterNumInGame = count($this->checkLaterNumInGame($laterNumbers, $jogo));
+                # Dezenas das 5 mais atrasadas
+                $checkLaterNumInGame = count($this->checkLaterNumInGame($laterNumbers, $jogo));
 
-            # Dezenas das 5 que mais são sorteadas
-            $checkFrequencyInGame = count($this->checkFrequencyInGame($countFrequency, $jogo));
+                # Dezenas das 5 que mais são sorteadas
+                $checkFrequencyInGame = count($this->checkFrequencyInGame($countFrequency, $jogo));
 
-            // Guardar resultado da avaliação como treino         
-            $training['sumDezene'][] = $sumDezene;
-            $training['qtdPar'][] = $qtdPar;
-            $training['qtdImpar'][] = $qtdImpar;
-            $training['yes_15_exist'][] = $yes_15_exist;
-            $training['not_10_exist'][] = $not_10_exist;
-            $training['yes_prim_exist'][] = $yes_prim_exist;
-            $training['not_prim_exist'][] = $not_prim_exist;
-            $training['prime_20'][] = $prime_20;
-            $training['prim_exist'][] = $prim_exist;
-            $training['checkLaterNumInGame'][] = $checkLaterNumInGame;
-            $training['checkFrequencyInGame'][] = $checkFrequencyInGame;
+                // Guardar resultado da avaliação como treino         
+                $training['sumDezene'][] = $sumDezene;
+                $training['qtdPar'][] = $qtdPar;
+                $training['qtdImpar'][] = $qtdImpar;
+                $training['yes_15_exist'][] = $yes_15_exist;
+                $training['not_10_exist'][] = $not_10_exist;
+                $training['yes_prim_exist'][] = $yes_prim_exist;
+                $training['not_prim_exist'][] = $not_prim_exist;
+                $training['prime_20'][] = $prime_20;
+                $training['prim_exist'][] = $prim_exist;
+                $training['checkLaterNumInGame'][] = $checkLaterNumInGame;
+                $training['checkFrequencyInGame'][] = $checkFrequencyInGame;
+            }
         }
 
         // Guardar resultado da avaliação como treino       
@@ -584,5 +583,45 @@ class Calculation
     public function getTraining(): array
     {
         return $this->training;
+    }
+
+    /**
+     * Verificar a menor posição na wordlist que um jogo foi sorteado e a maior posição 
+     * para determinar uma margem de verificação na wordlist
+     *
+     * @return array
+     */
+    public function getMarginWordList(): array
+    {
+        $result = [];
+        $position = [];
+        $getWordlist = $this->getWordlist();
+
+        foreach ($this->dataset as $key => $hist) {
+            $game = implode(' ', $hist);
+            $p = array_search($game, $getWordlist);
+            $position[] = $p;
+            $result['position'][] = "$key | $p | $game";
+        }
+
+        $result['min'] = min($position);
+        $result['max'] = max($position);
+        $result['med'] = round(array_sum($position) / count($position), 0);
+
+        return $result;
+    }
+
+    /**
+     * Gerar arquivo txt com a correção da posição de cada jogo na wordlist
+     *
+     * @return void
+     */
+    public function positionsMargin(): void
+    {
+        echo Helper::title('Verificar Range da Wordlist');
+        echo date("d/m/Y H:i:s") . " - Inicio. \n";
+        $getMarginWordList = $this->getMarginWordList();
+        echo date("d/m/Y H:i:s") . " - Fim. \n";
+        Helper::saveFile('position.txt', implode("\n", $getMarginWordList['position']));
     }
 }

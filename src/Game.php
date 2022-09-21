@@ -2,7 +2,6 @@
 
 namespace Src;
 
-use LDAP\Result;
 use Src\Calculation;
 
 class Game
@@ -57,11 +56,11 @@ class Game
     {
         $jogo = [];
         $this->qtd_analysis = $qtd_analysis;
-        $this->cal->trainingMargin($qtd_analysis, $this->test);
-        $margins = $this->cal->getTraining([], 1, "Analise de $qtd_analysis números:");
 
         // Selecionar os últimos concursos 
         $last_games = $this->cal->getLastGames($qtd_analysis);
+        $this->cal->trainingMargin($this->cal->getLastGames($qtd_analysis + 1));
+        $margins = $this->cal->getTraining();
         if ($this->test) {
             $this->end_game_test = end($last_games); //Jogo a ser previsto
             array_pop($last_games);
@@ -76,36 +75,42 @@ class Game
         $countFrequency = $this->cal->countFrequency($last_games);
         $getDataSetString = $this->cal->getDataSetString();
         $endGame = end($last_games);
-
-        echo Helper::title('Logs');
-        echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
+        $log_n_verify = $log_n_verify_range = 100000;
+        $hists = 0;
         $end = 1;
-        $end_wordlist = 1000000;
-        $log_n_verify = 100000;
-        $log_n_verify_range = 100000;
-        $key = 1;
+        $end_wordlist = 1870;
+
+        echo Helper::title('Buscar Jogo na Wordlist');
+        echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
         for ($i = 0; $i < $end;) {
             // $end_wordlist++;
-            // $key = mt_rand(1, $wordlist_count);
-            $end_wordlist += (100 + mt_rand(1, 100));
-            $key = $end_wordlist;
-            $check_game = explode(' ', $wordlist[$key]);
+            $end_wordlist += (100 + mt_rand(1, 100)); //11-12-13
+            //$end_wordlist += (mt_rand(1, 50) + mt_rand(1, 50)); //14
+            //$end_wordlist = mt_rand($end_wordlist, $end_wordlist);
+            $check_game = empty($wordlist[$end_wordlist]) ? explode(' ', $wordlist[$wordlist_count]) : explode(' ', $wordlist[$end_wordlist]);
             $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins);
 
             if ($this->test) {
-                //  $countHits = count($this->cal->checkHits($this->end_game_test, $check_game));
-                // if($countHits == 14){
-                //     echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist \n";
+                $countHits = count($this->cal->checkHits($this->end_game_test, $check_game));
+                // if (
+                //     // $checkAnalysis == 0 
+                //     // &&
+                //     $countHits >= 11
+                // ) {
+                    // $hists++;
+                    echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist \n";
                 // }
+
+                // if ($hists == 10) $i++;
             }
 
-            if ($end_wordlist == $log_n_verify) {
+            if ($end_wordlist >= $log_n_verify) {
                 echo date("d/m/Y H:i:s") . " - $end_wordlist jogos verificados. \n";
                 $log_n_verify += $log_n_verify_range;
             }
 
             if ($checkAnalysis == 0) {
-                echo date("d/m/Y H:i:s") . " - ID do jogo: $key \n";
+                echo date("d/m/Y H:i:s") . " - ID do jogo: $end_wordlist \n";
                 $jogo = $check_game;
                 $i++;
             }
@@ -155,10 +160,11 @@ class Game
         if ($qtdPar < $margins['qtdPar']['min'] || $qtdPar > $margins['qtdPar']['max']) return 5;
 
         # O jogo deve ter em media 8 dezenas pares
-        $qtdImpar = $qtdImparPar['impar'];
+        $qtdImpar = $qtdImparPar['impar']; // Verifica se esses números estão no jogo
         if ($qtdImpar < $margins['qtdImpar']['min'] || $qtdImpar > $margins['qtdImpar']['max']) return 6;
 
-        $checkPreviousExist = $this->cal->checkPreviousExist($endGame, $game);
+        $numExist = [];
+        $checkPreviousExist = $this->cal->checkPreviousExist($endGame, $game, $numExist);
         # Deve ter de 7 a 10 dezenas que saiu no concurso anterior
         $yes_15_exist = count($checkPreviousExist['yes_15_exist']);
         if ($yes_15_exist < $margins['yes_15_exist']['min'] || $yes_15_exist > $margins['yes_15_exist']['max']) return 7;
@@ -183,21 +189,26 @@ class Game
         $prime_20 = count($checkPreviousExist['prime_20']);
         if ($prime_20 == 14) return 12;
 
+        // # Não deve ter alguns números que não deverá sair
+        $num_exist = count($checkPreviousExist['num_exist']);
+        // if ($num_exist != 5) return 13;
+
         # Se tiver o número 1, deve ter ao menos o número 2, 3 ou 4.
         $checkParent1 = $this->cal->checkParent($game, 1, [2, 3, 4]);
-        if ($checkParent1 == false) return 13;
+        if ($checkParent1 == false) return 14;
 
         # Se tiver o número 15, deve ter ao menos o número 22, 23, 24 ou 25.
         $checkParent15 = $this->cal->checkParent($game, 15, [22, 23, 24, 25]);
-        if ($checkParent15 == false) return 14;
+        if ($checkParent15 == false) return 15;
 
         # Deve ter ao menos uma das 4 dezenas mais atrasadas
         $checkLaterNumInGame = count($this->cal->checkLaterNumInGame($laterNumbers, $game));
-        if ($checkLaterNumInGame < $margins['checkLaterNumInGame']['min'] || $checkLaterNumInGame > $margins['checkLaterNumInGame']['max']) return 15;
+        if ($checkLaterNumInGame < $margins['checkLaterNumInGame']['min'] || $checkLaterNumInGame > $margins['checkLaterNumInGame']['max']) return 16;
 
-        # Deve ter ao menos uma das 6 dezenas que mais são sorteadas
-        $checkFrequencyInGame = count($this->cal->checkFrequencyInGame($countFrequency, $game));
-        if ($checkFrequencyInGame < $margins['checkFrequencyInGame']['min'] || $checkFrequencyInGame > $margins['checkFrequencyInGame']['max']) return 16;
+        # Deve ter ao menos uma das 4 dezenas que mais são sorteadas
+        $qtdNum = 4;
+        $checkFrequencyInGame = count($this->cal->checkFrequencyInGame($countFrequency, $game, 4));
+        if ($checkFrequencyInGame == $qtdNum) return 17;
 
         // // Guardar resultado da análise     
         $this->dataAnalysis['sumDezene']['analysis'] = $sumDezene;
@@ -209,6 +220,7 @@ class Game
         $this->dataAnalysis['not_prim_exist']['analysis'] = $not_prim_exist;
         $this->dataAnalysis['prim_exist']['analysis'] = $prim_exist;
         $this->dataAnalysis['prime_20']['analysis'] = $prime_20;
+        $this->dataAnalysis['num_exist']['analysis'] = $num_exist;
         $this->dataAnalysis['checkLaterNumInGame']['analysis'] = $checkLaterNumInGame;
         $this->dataAnalysis['checkFrequencyInGame']['analysis'] = $checkFrequencyInGame;
 

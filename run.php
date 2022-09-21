@@ -60,6 +60,7 @@ echo "\n 3 - Jogar.";
 echo "\n 4 - Gerar txt com a representação visual dos resultados.";
 echo "\n 5 - Atualizar Dataset.";
 echo "\n 6 - Jogar em modo teste múltiplas vzs.";
+echo "\n 7 - Gerar txt com a posição de cada jogo na wordlist.";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -113,7 +114,12 @@ switch (trim($input)) {
         $game->setModeTest();
         $game->generateGameMulti();
         break;
-
+    case 7:
+        clearTerminal();
+        echo Helper::title($title);
+        $game = new Calculation();
+        $game->positionsMargin();
+        break;
     default:
         echo "\nEssa opção não exite, tente novamente";
         break;
