@@ -187,35 +187,96 @@ class Calculation
     /**
      * Quadro com os 25 resultados
      *
+     * @param string $file Nome do arquivo onde deverá ser salvo os dados
+     * @param array $games
      * @return void
      */
-    public function withThe25()
+    public function withThe25($file = "img25.txt", $games = [])
     {
         $content = [];
+        $table_ref = range(1, 25);
+        $div = range(0, 25, 3);
+        $games = empty($games) ? $this->dataset : $games;
 
-        for ($i = 1; $i <= 25; $i++) {
-            $table_ref[$i] = $i;
-        }
-
-        foreach ($this->dataset as $line) {
-
+        foreach ($games as $line) {
             $str = [];
             foreach ($table_ref as $item_ref) {
-
                 if (in_array($item_ref, $line)) {
-                    $num = str_pad($item_ref, 2, '0', STR_PAD_LEFT);
-                    $str[] = "0";
+                    $str[] = "1";
                 } else {
-                    $str[] = " ";
+                    $str[] = "0";
                 }
+                if (in_array($item_ref, $div) && $item_ref < 24) $str[] = '|';
             }
-
-            $content[] = implode(" ", $str);
+            $content[] = implode("", $str);
         }
 
-        Helper::saveFile("./img25.txt", implode("\n", $content));
+        Helper::saveFile("./$file", implode("\n", $content));
+        print_r("\nOs dados foram salvos no arquivo $file\n");
+    }
 
-        print_r("\nOs dados foram salvos no arquivo dataset_img\n");
+    /**
+     * Gerar jogo com a regra 3x3
+     *
+     * @param string $test Treu para modo de teste
+     * @return void
+     */
+    public function game3x3($test = false)
+    {
+        $name_file = 'game3x3.txt';
+        $arr_base = [];
+        $last_games = $this->getLastGames(2623);
+
+        $this->withThe25($name_file, $last_games);
+        $file = fopen($name_file, "r");
+
+        while (!feof($file)) {
+            $line = fgets($file);
+            $arr_base[] = explode('|', $line);
+        }
+        fclose($file);
+
+        if ($test) {
+            $prev3x3 = end($arr_base);
+            unset($arr_base[array_key_last($arr_base)]);
+        }
+
+        $matriz = [];
+        $i = 0;
+        foreach ($arr_base as $key => $arr_part) {
+            $i++;
+            if ($i >= 3) {
+                foreach ($arr_part as $key_part => $part) {
+                    $x1 = $arr_base[$key - 2][$key_part];
+                    $x2 = $arr_base[$key - 1][$key_part];
+                    $matriz[$x1 . '_' . $x2][$part] = (empty($matriz[$x1 . '_' . $x2][$part]) ? 1 : $matriz[$x1 . '_' . $x2][$part] + 1);
+                }
+            }
+        }
+
+        //variáveis dos últimos jogos
+        $prevx1 = $arr_base[array_key_last($arr_base) - 1];
+        $prevx2 = $arr_base[array_key_last($arr_base)];
+
+        //Previsão
+        $prevx3 = [];
+        for ($i = 0; $i < count($prevx1); $i++) {
+            if (!empty($matriz[$prevx1[$i] . '_' . $prevx2[$i]])) {
+                $statistic = $matriz[$prevx1[$i] . '_' . $prevx2[$i]];
+                print_r($statistic);
+                $prevx3[$i] =  array_search(max($statistic), $statistic);
+            } else {
+                $prevx3[$i] = 'NULL';
+            }
+        }
+
+        echo "\nPrevisto: \n";
+        echo implode(' | ', $prevx3);
+        if ($test) {
+            echo "\nCorreto: \n";
+            echo implode(' | ', $prev3x3);
+        }
+        echo "\n";
     }
 
     /**
@@ -518,7 +579,7 @@ class Calculation
         $this->training = $training = [];
 
         foreach ($games as $key => $jogo) {
-       
+
             if (!empty($games[$key - 1])) {
 
                 # A soma das dezenas
@@ -597,11 +658,13 @@ class Calculation
         $position = [];
         $getWordlist = $this->getWordlist();
 
+        $i = 0;
         foreach ($this->dataset as $key => $hist) {
+            $i++;
             $game = implode(' ', $hist);
             $p = array_search($game, $getWordlist);
             $position[] = $p;
-            $result['position'][] = "$key | $p | $game";
+            $result['position'][] = "$i | $p | $game";
         }
 
         $result['min'] = min($position);

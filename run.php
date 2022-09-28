@@ -61,6 +61,8 @@ echo "\n 4 - Gerar txt com a representação visual dos resultados.";
 echo "\n 5 - Atualizar Dataset.";
 echo "\n 6 - Jogar em modo teste múltiplas vzs.";
 echo "\n 7 - Gerar txt com a posição de cada jogo na wordlist.";
+echo "\n 8 - Gerar jogo com método 3x3 em modo teste";
+echo "\n 9 - Gerar jogo com método 3x3";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -119,6 +121,18 @@ switch (trim($input)) {
         echo Helper::title($title);
         $game = new Calculation();
         $game->positionsMargin();
+        break;
+    case 8:
+        clearTerminal();
+        echo Helper::title($title);
+        $game = new Calculation();
+        $game->game3x3(true);
+        break;
+    case 9:
+        clearTerminal();
+        echo Helper::title($title);
+        $game = new Calculation();
+        $game->game3x3();
         break;
     default:
         echo "\nEssa opção não exite, tente novamente";

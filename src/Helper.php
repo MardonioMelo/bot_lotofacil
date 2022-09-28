@@ -23,6 +23,7 @@ class Helper
      *
      * @param array $training array gerada com método $this->trainingMargin()
      * @param int $modo Modo de exibição dos dados
+     * @param string $title Titulo
      * @return void
      */
     public static function showTraining(array $training = [], int $modo = 1, $title="Margens")
@@ -52,7 +53,24 @@ class Helper
                 echo "\n";
             }
             echo "--------------------------| \n";
-        }       
+
+        }elseif($modo == 3){
+            echo "\n". str_pad($title, 36, '-', STR_PAD_RIGHT). "|";
+            echo "\nAnálise-------------|Val|Mín|Máx|Méd \n";
+            foreach ($training as $name => $arrTrain) {
+                echo str_pad($name, 20, '-', STR_PAD_RIGHT);
+                echo "|";
+                echo str_pad($arrTrain['analysis'] ?? '-', 3, ' ', STR_PAD_LEFT);
+                echo "|";
+                echo str_pad($arrTrain['min'] ?? '-', 3, ' ', STR_PAD_LEFT);
+                echo "|";
+                echo str_pad($arrTrain['max'] ?? '-', 3, ' ', STR_PAD_LEFT);
+                echo "|";
+                echo str_pad($arrTrain['med'] ?? '-', 3, ' ', STR_PAD_LEFT);
+                echo "\n";
+            }
+            echo "------------------------------------| \n";
+        }  
     }
 
     /**
