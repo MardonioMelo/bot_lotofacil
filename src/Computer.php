@@ -13,41 +13,40 @@ class Computer
     public static $file_dataset = 'dataset.csv';
 
     /**
-     * Undocumented function
-     *
+     * Gerar previsão de jogo de forma simplificada para testar os parâmetros
+     * 
+     * @param bool $test Modo de teste
      * @return void
      */
-    public static function run($test = false)
+    public static function run($test = false): void
     {
         // $dataset = new CsvDataset('dataset.csv', 15, true);
         // $samples = $dataset->getSamples();
         // $labels = $dataset->getTargets();
-        print_r(self::play($test, 2500, 0, true));
+        self::exPredict($test);
     }
 
     /**
-     * Undocumented function
+     * Gerar previsão de jogo
      *
      * @param bool $test Modo de teste
-     * @param integer $ngames Número de jogos
-     * @param integer $limitAct Limite de aceite
      * @param boolean $log Exibir logs
+     * @param integer $ngames Número de jogos
      * @return array
      */
-    public static function play($test = false, $ngames = 9, $limitAct = 0, $log = false)
+    public static function exPredict($test = false, $log = true, $ngames = 2600): array
     {
         $cal = new Calculation();
-        $dataset = $cal->getLastGames($ngames);
 
+        echo Helper::title('Previsão de Números');
         if ($test) {
-
+            $dataset = $cal->getLastGames($ngames + 1);
             $game_test = end($dataset);
             unset($dataset[array_key_last($dataset)]);
-            $game = self::train($dataset, true);
+            $game = self::predict($dataset, true);
             $gameUnique = array_unique($game);
-            $acertos = $cal->checkHits($game_test, $game);
-
-            if (count($acertos) >= $limitAct && $log == true) {
+            if ($log == true) {
+                $acertos = $cal->checkHits($game_test, $game);
                 echo "\nJogos: " . $ngames;
                 echo "\nPrevisto: " . implode('-', $game);
                 echo "\nCorreto: " . implode('-', $game_test);
@@ -56,7 +55,8 @@ class Computer
                 echo "\n";
             }
         } else {
-            $game = self::train($dataset);
+            $dataset = $cal->getLastGames($ngames);
+            $game = self::predict($dataset);
             $gameUnique = array_unique($game);
             if ($log == true) {
                 echo "\nPrevisto: " . implode('-', $game);
@@ -70,10 +70,10 @@ class Computer
 
     /**
      * Treinar e prever jogo
-     *
+     * @param array $dataset dados para treino
      * @return array
      */
-    public static function train($dataset)
+    public static function predict($dataset): array
     {
         $nx = [];
         $i = 0;

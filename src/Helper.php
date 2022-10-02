@@ -12,9 +12,9 @@ class Helper
      */
     public static function title(string $desc): string
     {
-        $title = "\n------------------------------------> \n";
+        $title = "\n-------------------------------------------> \n";
         $title .= " $desc\n";
-        $title .= "------------------------------------> \n";
+        $title .= "-------------------------------------------> \n";
         return $title;
     }
 

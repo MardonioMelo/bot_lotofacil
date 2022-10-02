@@ -375,13 +375,7 @@ class Calculation
      */
     public function checkHits(array $endGameTest, array $jogo): array
     {
-        $hits = [];
-        foreach ($endGameTest as $item) {
-            if (in_array($item, $jogo)) {
-                $hits[] = $item;
-            }
-        }
-        return $hits;
+        return array_intersect($endGameTest, $jogo);
     }
 
     /**
@@ -597,11 +591,12 @@ class Calculation
     }
 
     /**
-     * Obter o range mínimo e máximo quem que os últimos jogos sairão  referente a word list
+     * Obter o range mínimo e máximo quem que os últimos jogos saiu referente a wordlist
      *
+     * @param int $limit Limite de jogos
      * @return array
      */
-    public function getMinMaxWordList($limit): array
+    public function getMarginList($limit): array
     {
         $file = 'position.txt'; 
 
@@ -619,18 +614,18 @@ class Calculation
        
         return [
             "min" => min($result),
-            "max" => max($result)
+            "max" => max($result),
+            "diff" => max($result) - min($result)
         ];
     }
 
     /**
      * Verificar margens para analises posterior 
      *
-     * @param integer $qtd_analysis
-     * @param boolean $test
+     * @param array $jogos para verificara
      * @return void
      */
-    public function trainingMargin(array $games): void
+    public function checkMargin(array $games): void
     {
         $laterNumbers = $this->laterNumbers($games);
         $countFrequency = $this->countFrequency($games);
@@ -699,11 +694,11 @@ class Calculation
 
     /**
      * Consultar dados do treinamento
-     * Execute o método $this->cal->trainingMargin() para carregar o treinamento
+     * Execute o método $this->cal->checkMargin() para carregar o treinamento
      *
      * @return array
      */
-    public function getTraining(): array
+    public function getMargin(): array
     {
         return $this->training;
     }

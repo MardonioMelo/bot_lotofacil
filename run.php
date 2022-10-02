@@ -68,6 +68,7 @@ echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
 $title = 'GERADOR DE JOGO PARA LOTOFACIL';
+$teste = ' - TESTE';
 
 switch (trim($input)) {
 
@@ -87,7 +88,7 @@ switch (trim($input)) {
         break;
     case 2:
         clearTerminal();
-        echo Helper::title($title);
+        echo Helper::title($title . $teste);
         $game = new Game();
         $game->setModeTest();
         $game->play();
@@ -105,7 +106,7 @@ switch (trim($input)) {
         break;
     case 44:
         clearTerminal();
-        echo Helper::title($title);        
+        echo Helper::title($title . $teste);        
         Computer::run(true);
         break;
     case 5:
@@ -117,7 +118,7 @@ switch (trim($input)) {
         break;
     case 6:
         clearTerminal();
-        echo Helper::title($title);
+        echo Helper::title($title . $teste);
         $game = new Game();
         $game->setModeTest();
         $game->generateGameMulti();
@@ -130,7 +131,7 @@ switch (trim($input)) {
         break;
     case 8:
         clearTerminal();
-        echo Helper::title($title);
+        echo Helper::title($title . $teste);
         $game = new Calculation();
         $game->game3x3(true);
         break;

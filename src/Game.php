@@ -59,8 +59,8 @@ class Game
 
         // Selecionar os últimos concursos 
         $last_games = $this->cal->getLastGames($qtd_analysis);
-        $this->cal->trainingMargin($this->cal->getLastGames($qtd_analysis + 1));
-        $margins = $this->cal->getTraining();
+        $this->cal->checkMargin($this->cal->getLastGames($qtd_analysis + 1));
+        $margins = $this->cal->getMargin();
         if ($this->test) {
             $this->end_game_test = end($last_games); //Jogo a ser previsto
             array_pop($last_games);
@@ -69,54 +69,47 @@ class Game
         // Variáveis auxiliares para analise
         $all_games = $this->cal->allPreviousGames($this->test);
         $wordlist = $this->cal->getWordlist();
-        $wordlist_count = count($wordlist); //3268760
+        $wordlist_count = 3268760;
         $laterNumbers = $this->cal->laterNumbers($last_games);
         $countFrequency = $this->cal->countFrequency($last_games);
         $getDataSetString = $this->cal->getDataSetString();
         $endGame = end($last_games);
-        $log_n_verify = $log_n_verify_range = 100000;
         $hists = 0;
-        $end = 1;
-        $end_wordlist = 1870;
-        $numExist = Computer::play($this->test, 2500, 0, true);
-        $getMinMaxWordList = $this->cal->getMinMaxWordList(2500);
+        $stop = 0;
+        $nLoops = 0;
+        $numExist = Computer::exPredict($this->test);
+        $getMarginList = $this->cal->getMarginList(2500);
 
         echo Helper::title('Buscar Jogo na Wordlist');
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
-        for ($i = 0; $i < $end;) {
-            //  $end_wordlist++;
-            // $end_wordlist += (50 + mt_rand(1, 100)); //11-12-13
-            // $end_wordlist += (mt_rand(1, 50) + mt_rand(1, 50)); //14
-            $end_wordlist = mt_rand($getMinMaxWordList['min'], $getMinMaxWordList['max']);
-            $check_game = empty($wordlist[$end_wordlist]) ? explode(' ', $wordlist[$wordlist_count]) : explode(' ', $wordlist[$end_wordlist]);
-            $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist);
+        while ($stop != 1) {
+            $nLoops++;
+            $end_wordlist = mt_rand($getMarginList['min'], $getMarginList['max']);
+            if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
 
-            //if ($this->test) {
-           // $countHits = count($this->cal->checkHits($this->end_game_test, $check_game));
-           // $hists++;
-            // if ($countHits >= 13) {
-            //     // $hists++;
-           // echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $hists\n";
-            // }
+                $check_game = explode(' ', $wordlist[$end_wordlist]);
+                $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist);
 
+                // if ($this->test) {
+                //     $countHits = count($this->cal->checkHits($this->end_game_test, $check_game));
+                //     $hists++;
+                //     if ($countHits >= 13) {
+                //         // $hists++;
+                //         echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
+                //     }
+                //     echo date("d/m/Y H:i:s") . " - Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
 
-            //  if ($hists == 10) $i++;
-            // }
+                //     if ($hists == 10) $stop++;
+                // }
 
-            // if ($end_wordlist >= $log_n_verify) {
-            //     echo date("d/m/Y H:i:s") . " - $end_wordlist jogos verificados. \n";
-            //     $log_n_verify += $log_n_verify_range;
-            // }
-
-            if ($checkAnalysis == 0) {
-                echo date("d/m/Y H:i:s") . " - ID do jogo: $end_wordlist \n";
-                $jogo = $check_game;
-                $i++;
-            }
-
-            if ($end_wordlist >= $wordlist_count) {
+                if ($checkAnalysis == 0) {
+                    echo date("d/m/Y H:i:s") . " - ID do jogo: $end_wordlist \n";
+                    $jogo = $check_game;
+                    $stop++;
+                }
+            } else {
                 echo date("d/m/Y H:i:s") . " - Nenhum número da Wordlist corresponde ao esperado! \n";
-                $i++;
+                $stop++;
             }
         }
         echo date("d/m/Y H:i:s") . " - Fim da busca na Wordlist. \n";
@@ -140,17 +133,17 @@ class Game
      * @param array $endGame Último jogo que saiu
      * @param array $getDataSetString Array obtido com o método $this->cal->getDataSetString()  
      * @param array $margins Array com as margens de especificação obtidas com $this->cal->getTraining();
-     * @param array $numExist Números 
+     * @param array $numExist Verificar se existe estes úmeros
      * @return int
      */
     public function checkAnalysis($game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist): int
     {
-        # Verificar se o primeiro número é igual ao primeiro que deve existir
-        if ($numExist[0] != $game[0]) return 1;
-
         // # O jogo deve ser inédito
         $unprecedented = $this->cal->unprecedented($getDataSetString, $game, $this->test);
-        if ($unprecedented > 0) return 2;
+        if ($unprecedented > 0) return 1;
+
+        # Verificar se todos os números previstos estão no jogo
+        if (count(array_intersect($game, $numExist)) != count($numExist)) return 2;
 
         # As dezenas devem estar dentro do máximo e mínimo para cada posição  
         $checkMaxMinGame = count($this->cal->checkMaxMinGame($all_games, $game)); //aqui deve avaliar todos os jogos desde o inicio
@@ -196,7 +189,7 @@ class Game
 
         // # Deve ter alguns números que deverá sair
         $num_exist = count($checkPreviousExist['num_exist']);
-        if ($num_exist != count($numExist)) return 13;
+        //if ($num_exist < count($numExist)) return 13;
 
         // # Deve ter ao menos 4 números sequenciais
         $num_sequence = max($checkPreviousExist['num_sequence']);
