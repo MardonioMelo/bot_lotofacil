@@ -195,7 +195,7 @@ class Calculation
     {
         $content = [];
         $table_ref = range(1, 25);
-        $div = range(0, 25, 3);
+        $div = range(0, 25, 5);
         $games = empty($games) ? $this->dataset : $games;
 
         foreach ($games as $line) {
@@ -206,7 +206,7 @@ class Calculation
                 } else {
                     $str[] = "0";
                 }
-                if (in_array($item_ref, $div) && $item_ref < 24) $str[] = '|';
+                if (in_array($item_ref, $div)) $str[] = '|';
             }
             $content[] = implode("", $str);
         }
@@ -225,7 +225,8 @@ class Calculation
     {
         $name_file = 'game3x3.txt';
         $arr_base = [];
-        $last_games = $this->getLastGames(2623);
+         $last_games = $this->dataset; 
+        //$last_games = $this->getLastGames(1500);
 
         $this->withThe25($name_file, $last_games);
         $file = fopen($name_file, "r");
@@ -261,22 +262,42 @@ class Calculation
         //Previsão
         $prevx3 = [];
         for ($i = 0; $i < count($prevx1); $i++) {
-            if (!empty($matriz[$prevx1[$i] . '_' . $prevx2[$i]])) {
-                $statistic = $matriz[$prevx1[$i] . '_' . $prevx2[$i]];
+            $key = trim($prevx1[$i] . '_' . $prevx2[$i]);
+            if (!empty($matriz[$key]) && $key != '_') {
+                $statistic = $matriz[$key];
+                $prevx3[$i] = array_search(max($statistic), $statistic);
                 print_r($statistic);
-                $prevx3[$i] =  array_search(max($statistic), $statistic);
             } else {
-                $prevx3[$i] = 'NULL';
+                $prevx3[$i] = '     ';
             }
         }
 
-        echo "\nPrevisto: \n";
-        echo implode(' | ', $prevx3);
+
+
+        echo "\nPrevisto: " . implode(' | ', $prevx3);
         if ($test) {
-            echo "\nCorreto: \n";
-            echo implode(' | ', $prev3x3);
+            echo "\nCorreto : " . implode(' | ', $prev3x3);
+
+            //Acertos
+            $arr_prev3x3 = str_split(implode('', $prev3x3));
+            $arr_prevx3 = str_split(implode('', $prevx3));
+            $i = 0;
+            $qtd_num = 0;
+            foreach ($arr_prev3x3 as $key => $val) {
+                if (!empty($arr_prevx3[$key])) {
+                    if ($val == $arr_prevx3[$key] && $arr_prevx3[$key] > 0) {
+                        $i++;
+                    }
+                    if ($arr_prevx3[$key] > 0) {
+                        $qtd_num++;
+                    }
+                }
+            }
+
+            echo "\nQtd. N. : $qtd_num";
+            echo "\nAcertos : $i";
+            echo "\n";
         }
-        echo "\n";
     }
 
     /**
@@ -388,6 +409,7 @@ class Calculation
         $result['prim_exist'] = [];
         $result['prime_20'] = [];
         $result['num_exist'] = [];
+        $result['num_sequence']= [];
 
         foreach ($range as $num) {
             if (in_array($num, $game)) {
@@ -417,6 +439,15 @@ class Calculation
                 if (in_array($num, $exist)) {
                     $result['num_exist'][] = $num;
                 }
+           
+                if(isset($lastN) && $num == ($lastN + 1)){
+                    $k = array_key_last($result['num_sequence']);
+                    $result['num_sequence'][$k] += 1;
+                }else{
+                    $k = array_key_last($result['num_sequence']);
+                    $result['num_sequence'][$k+1] = 1;
+                }
+                $lastN = $num;
             }
         }
 
@@ -566,6 +597,33 @@ class Calculation
     }
 
     /**
+     * Obter o range mínimo e máximo quem que os últimos jogos sairão  referente a word list
+     *
+     * @return array
+     */
+    public function getMinMaxWordList($limit): array
+    {
+        $file = 'position.txt'; 
+
+        if (file_exists($file)) {
+            $arr = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            unset($arr[0]);
+        }
+
+        $positions = ($limit >= count($arr) ? $arr : array_slice($arr, count($arr) - $limit, $limit, true));
+
+        $result = [];
+        foreach ($positions as $key => $val) {
+            $result[] = trim(explode("|", $val)[1]);            
+        }
+       
+        return [
+            "min" => min($result),
+            "max" => max($result)
+        ];
+    }
+
+    /**
      * Verificar margens para analises posterior 
      *
      * @param integer $qtd_analysis
@@ -603,6 +661,9 @@ class Calculation
                 # Números que estão no jogo de 20 números q mais pontuou
                 $prime_20 = count($checkPreviousExist['prime_20']);
 
+                # Números sequenciais
+                $num_sequence = max($checkPreviousExist['num_sequence']);
+
                 # Números primos
                 $prim_exist = count($checkPreviousExist['prim_exist']);
 
@@ -622,6 +683,7 @@ class Calculation
                 $training['not_prim_exist'][] = $not_prim_exist;
                 $training['prime_20'][] = $prime_20;
                 $training['prim_exist'][] = $prim_exist;
+                $training['num_sequence'][] = $num_sequence;
                 $training['checkLaterNumInGame'][] = $checkLaterNumInGame;
                 $training['checkFrequencyInGame'][] = $checkFrequencyInGame;
             }

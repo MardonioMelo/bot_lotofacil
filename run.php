@@ -2,9 +2,9 @@
 require __DIR__ . './vendor/autoload.php';
 
 use Src\Game;
+use Src\Helper;
 use Src\Computer;
 use Src\Calculation;
-use Src\Helper;
 
 ini_set('memory_limit', -1);
 date_default_timezone_set('America/Sao_Paulo');
@@ -57,7 +57,8 @@ echo "\n Escolha uma opção:";
 echo "\n 1 - Verificar se um número já foi jogado.";
 echo "\n 2 - Jogar em modo teste.";
 echo "\n 3 - Jogar.";
-echo "\n 4 - Gerar txt com a representação visual dos resultados.";
+echo "\n 4 - Modo ML.";
+echo "\n 44 - Modo de teste ML.";
 echo "\n 5 - Atualizar Dataset.";
 echo "\n 6 - Jogar em modo teste múltiplas vzs.";
 echo "\n 7 - Gerar txt com a posição de cada jogo na wordlist.";
@@ -99,15 +100,20 @@ switch (trim($input)) {
         break;
     case 4:
         clearTerminal();
-        echo Helper::title($title);
-        $game = new Calculation();
-        $game->withThe25();
+        echo Helper::title($title);        
+        Computer::run();
+        break;
+    case 44:
+        clearTerminal();
+        echo Helper::title($title);        
+        Computer::run(true);
         break;
     case 5:
         clearTerminal();
         echo Helper::title($title);
         $game = new Calculation();
         $game->updateDataset();
+        $game->positionsMargin();
         break;
     case 6:
         clearTerminal();
