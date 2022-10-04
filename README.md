@@ -27,5 +27,5 @@ Escolha a opção para atualizar o banco de dados antes de executar as opções 
 
 ### Wordlist
 
-[Clique aqui](https://mega.nz/file/fV1H2IIa#BbDVwtwr7z0OUMa_kj_W9HEWKLgUYgs9kKlRjETOluY) para baixar a WordList de todas as combinações possiveis da Lotofácil
+[Clique aqui](https://mega.nz/file/fV1H2IIa#BbDVwtwr7z0OUMa_kj_W9HEWKLgUYgs9kKlRjETOluY) para baixar a WordList de todas as combinações possíveis da Lotofácil. Depois de baixar, adicione a wordlist na pasta raiz do projeto.
       
