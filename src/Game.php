@@ -75,45 +75,44 @@ class Game
         $getDataSetString = $this->cal->getDataSetString();
         $endGame = end($last_games);
         $hists = 0;
-        $stop = 0;
+        $stop = false;
         $nLoops = 0;
         $numExist = Computer::exPredict($this->test);
         $getMarginList = $this->cal->getMarginList();
 
         echo Helper::title('Buscar Jogo na Wordlist');
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
-        while ($stop != 1) {
+        while ($stop === false) {
             $nLoops++;
 
             $end_wordlist = mt_rand($getMarginList['min'], $getMarginList['max']);
             if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
-                // $end_wordlist = mt_rand(1, $wordlist_count);
-                // if (!empty($wordlist[$end_wordlist]) && $nLoops <= $wordlist_count) {
 
                 $check_game = explode(' ', $wordlist[$end_wordlist]);
                 $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist);
 
                 // if ($this->test) {
                 //     $countHits = count($this->cal->checkHits($this->end_game_test, $check_game));
-                //     $hists++;
-                //     if ($countHits >= 13) {
+                //     // $hists++;
+                //     if ($countHits >= 14) {
                 //         // $hists++;
                 //         echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
                 //     }
-               // echo date("d/m/Y H:i:s") . " - Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
-
-                //     if ($hists == 10) $stop++;
+                //     //if ($hists == 10) $stop = true;
                 // }
 
+                // echo date("d/m/Y H:i:s") . " - Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
                 // if ($checkAnalysis == 0 || !in_array($checkAnalysis, [1,2,5,4,17])) {
-                if ($checkAnalysis == 0) {                
+                // if ($checkAnalysis == 0 || $countHits >= 14) {            
+                if ($checkAnalysis == 0) {
                     echo date("d/m/Y H:i:s") . " - ID do jogo: $end_wordlist \n";
+                    echo date("d/m/Y H:i:s") . " - Loops: $nLoops \n";
                     $jogo = $check_game;
-                    $stop++;
+                    $stop = true;
                 }
             } else {
                 echo date("d/m/Y H:i:s") . " - Nenhum número da Wordlist corresponde ao esperado! \n";
-                $stop++;
+                $stop = true;
             }
         }
         echo date("d/m/Y H:i:s") . " - Fim da busca na Wordlist. \n";
