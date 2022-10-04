@@ -596,7 +596,7 @@ class Calculation
      * @param int $limit Limite de jogos
      * @return array
      */
-    public function getMarginList($limit): array
+    public function getMarginList($limit = 2600): array
     {
         $file = 'position.txt'; 
 

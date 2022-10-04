@@ -52,7 +52,7 @@ class Game
      * @param integer $qtd_analysis Qtd a ser analisado
      * @return array
      */
-    private function generateGame($qtd_analysis = 6): array
+    private function generateGame($qtd_analysis = 2600): array
     {
         $jogo = [];
         $this->qtd_analysis = $qtd_analysis;
@@ -78,14 +78,17 @@ class Game
         $stop = 0;
         $nLoops = 0;
         $numExist = Computer::exPredict($this->test);
-        $getMarginList = $this->cal->getMarginList(2500);
+        $getMarginList = $this->cal->getMarginList();
 
         echo Helper::title('Buscar Jogo na Wordlist');
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
         while ($stop != 1) {
             $nLoops++;
+
             $end_wordlist = mt_rand($getMarginList['min'], $getMarginList['max']);
             if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
+                // $end_wordlist = mt_rand(1, $wordlist_count);
+                // if (!empty($wordlist[$end_wordlist]) && $nLoops <= $wordlist_count) {
 
                 $check_game = explode(' ', $wordlist[$end_wordlist]);
                 $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist);
@@ -97,12 +100,13 @@ class Game
                 //         // $hists++;
                 //         echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
                 //     }
-                //     echo date("d/m/Y H:i:s") . " - Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
+               // echo date("d/m/Y H:i:s") . " - Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
 
                 //     if ($hists == 10) $stop++;
                 // }
 
-                if ($checkAnalysis == 0) {
+                // if ($checkAnalysis == 0 || !in_array($checkAnalysis, [1,2,5,4,17])) {
+                if ($checkAnalysis == 0) {                
                     echo date("d/m/Y H:i:s") . " - ID do jogo: $end_wordlist \n";
                     $jogo = $check_game;
                     $stop++;
