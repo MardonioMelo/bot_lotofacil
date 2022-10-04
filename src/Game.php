@@ -85,7 +85,7 @@ class Game
         while ($stop === false) {
             $nLoops++;
 
-            $end_wordlist = mt_rand($getMarginList['min'], $getMarginList['max']);
+            $end_wordlist = rand($getMarginList['min'], $getMarginList['max']);
             if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
 
                 $check_game = explode(' ', $wordlist[$end_wordlist]);

@@ -3,9 +3,7 @@
 namespace Src;
 
 use Src\Calculation;
-use Phpml\Dataset\CsvDataset;
 use Phpml\Classification\KNearestNeighbors;
-
 
 class Computer
 {
