@@ -225,7 +225,7 @@ class Calculation
     {
         $name_file = 'game3x3.txt';
         $arr_base = [];
-         $last_games = $this->dataset; 
+        $last_games = $this->dataset;
         //$last_games = $this->getLastGames(1500);
 
         $this->withThe25($name_file, $last_games);
@@ -311,7 +311,11 @@ class Calculation
         $last = file_get_contents('https://loteriascaixa-api.herokuapp.com/api/lotofacil');
         print_r("\nSalvando os dados consultados...");
         Helper::saveFile($this->file_dataset, $last);
-        print_r("\nBase de dados atualizada!\n");
+        print_r("\nBase de dados atualizada!");
+        $json = json_decode($last, true);
+        sort($json);
+        $endGame = end($json);
+        print_r("\nUltimo Concurso: {$endGame['concurso']} - {$endGame['data']}\n");
     }
 
     /**
@@ -403,7 +407,7 @@ class Calculation
         $result['prim_exist'] = [];
         $result['prime_20'] = [];
         $result['num_exist'] = [];
-        $result['num_sequence']= [];
+        $result['num_sequence'] = [];
 
         foreach ($range as $num) {
             if (in_array($num, $game)) {
@@ -433,13 +437,13 @@ class Calculation
                 if (in_array($num, $exist)) {
                     $result['num_exist'][] = $num;
                 }
-           
-                if(isset($lastN) && $num == ($lastN + 1)){
+
+                if (isset($lastN) && $num == ($lastN + 1)) {
                     $k = array_key_last($result['num_sequence']);
                     $result['num_sequence'][$k] += 1;
-                }else{
+                } else {
                     $k = array_key_last($result['num_sequence']);
-                    $result['num_sequence'][$k+1] = 1;
+                    $result['num_sequence'][$k + 1] = 1;
                 }
                 $lastN = $num;
             }
@@ -598,7 +602,7 @@ class Calculation
      */
     public function getMarginList($limit = 2600): array
     {
-        $file = 'position.txt'; 
+        $file = 'position.txt';
 
         if (file_exists($file)) {
             $arr = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -609,9 +613,9 @@ class Calculation
 
         $result = [];
         foreach ($positions as $key => $val) {
-            $result[] = trim(explode("|", $val)[1]);            
+            $result[] = trim(explode("|", $val)[1]);
         }
-       
+
         return [
             "min" => min($result),
             "max" => max($result),
