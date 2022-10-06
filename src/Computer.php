@@ -77,7 +77,7 @@ class Computer
         $i = 0;
         $samples = [];
         foreach ($dataset as $balls) {
-            if (isset($nx[0]) && count($nx[0]) == 6) {
+            if (isset($nx[0]) && count($nx[0]) == 1) {
 
                 foreach ($balls as $key => $ball) {
                     $samples[$key][] = $nx[$key];
@@ -94,7 +94,7 @@ class Computer
         }
 
         $game = [];
-        $classifier = new KNearestNeighbors(7);
+        $classifier = new KNearestNeighbors(1);
         foreach ($samples as $key => $sample) {
             $classifier->train($sample, $labels[$key]);
             $game[$key] = $classifier->predict(end($sample));
