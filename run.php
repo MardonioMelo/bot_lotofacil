@@ -55,14 +55,14 @@ function removerQuebraLinha($str)
 echo Helper::title('GERADOR DE JOGO PARA LOTOFACIL');
 echo "\n Escolha uma opção:";
 echo "\n 1 - Verificar se um número já foi jogado.";
-echo "\n 2 - Jogar em modo teste.";
-echo "\n 3 - Jogar.";
-echo "\n 4 - Modo ML.";
-echo "\n 44 - Modo de teste ML.";
-echo "\n 5 - Atualizar Dataset.";
-echo "\n 6 - Jogar em modo teste múltiplas vzs.";
-echo "\n 7 - Gerar jogo com método 3x3 em modo teste";
-echo "\n 8 - Gerar jogo com método 3x3";
+echo "\n 2 - Jogar.";
+echo "\n 22- Jogar em modo teste.";
+echo "\n 3 - Modo ML.";
+echo "\n 33- Modo de teste ML.";
+echo "\n 4 - Atualizar Dataset.";
+echo "\n 5 - Jogar em modo teste múltiplas vzs.";
+echo "\n 6 - Gerar jogo com método 3x3";
+echo "\n 66- Gerar jogo com método 3x3 em modo teste";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -84,8 +84,14 @@ switch (trim($input)) {
         $resp = explode('-', removerQuebraLinha(inputResp()));
         $calcule = new Calculation();
         echo ($calcule->unprecedented($this->cal->getDataSetString(), $resp) == 0 ? 'Este jogo nunca saiu!' : 'este jogo já saiu!');
-        break;
+        break;   
     case 2:
+        clearTerminal();
+        echo Helper::title($title);
+        $game = new Game();
+        $game->play();
+        break;
+    case 22:
         clearTerminal();
         echo Helper::title($title . $teste);
         $game = new Game();
@@ -95,43 +101,37 @@ switch (trim($input)) {
     case 3:
         clearTerminal();
         echo Helper::title($title);
-        $game = new Game();
-        $game->play();
-        break;
-    case 4:
-        clearTerminal();
-        echo Helper::title($title);
         Computer::run();
         break;
-    case 44:
+    case 33:
         clearTerminal();
         echo Helper::title($title . $teste);
         Computer::run(true);
         break;
-    case 5:
+    case 4:
         clearTerminal();
         echo Helper::title($title);
         $game = new Calculation();
         $game->updateDataset();
         break;
-    case 6:
+    case 5:
         clearTerminal();
         echo Helper::title($title . $teste);
         $game = new Game();
         $game->setModeTest();
         $game->generateGameMulti();
-        break;
-    case 7:
-        clearTerminal();
-        echo Helper::title($title . $teste);
-        $game = new Calculation();
-        $game->game3x3(true);
-        break;
-    case 8:
+        break;  
+    case 6:
         clearTerminal();
         echo Helper::title($title);
         $game = new Calculation();
         $game->game3x3();
+        break;
+    case 66:
+        clearTerminal();
+        echo Helper::title($title . $teste);
+        $game = new Calculation();
+        $game->game3x3(true);
         break;
     default:
         echo "\nEssa opção não exite, tente novamente";
