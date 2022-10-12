@@ -5,6 +5,8 @@
         }
     },
     "require": {
-        "php-ai/php-ml": "^0.9.0"
+        "symfony/dom-crawler": "^6.1",
+        "symfony/css-selector": "^6.1",
+        "php-ai/php-ml": "^0.4.1"
     }
 }

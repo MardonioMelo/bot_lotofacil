@@ -61,9 +61,8 @@ echo "\n 4 - Modo ML.";
 echo "\n 44 - Modo de teste ML.";
 echo "\n 5 - Atualizar Dataset.";
 echo "\n 6 - Jogar em modo teste múltiplas vzs.";
-echo "\n 7 - Gerar txt com a posição de cada jogo na wordlist.";
-echo "\n 8 - Gerar jogo com método 3x3 em modo teste";
-echo "\n 9 - Gerar jogo com método 3x3";
+echo "\n 7 - Gerar jogo com método 3x3 em modo teste";
+echo "\n 8 - Gerar jogo com método 3x3";
 echo "\n 0 - Sair.";
 echo "\n\nOpçao: ";
 $input = inputResp();
@@ -101,12 +100,12 @@ switch (trim($input)) {
         break;
     case 4:
         clearTerminal();
-        echo Helper::title($title);        
+        echo Helper::title($title);
         Computer::run();
         break;
     case 44:
         clearTerminal();
-        echo Helper::title($title . $teste);        
+        echo Helper::title($title . $teste);
         Computer::run(true);
         break;
     case 5:
@@ -114,7 +113,6 @@ switch (trim($input)) {
         echo Helper::title($title);
         $game = new Calculation();
         $game->updateDataset();
-        $game->positionsMargin();
         break;
     case 6:
         clearTerminal();
@@ -125,17 +123,11 @@ switch (trim($input)) {
         break;
     case 7:
         clearTerminal();
-        echo Helper::title($title);
-        $game = new Calculation();
-        $game->positionsMargin();
-        break;
-    case 8:
-        clearTerminal();
         echo Helper::title($title . $teste);
         $game = new Calculation();
         $game->game3x3(true);
         break;
-    case 9:
+    case 8:
         clearTerminal();
         echo Helper::title($title);
         $game = new Calculation();

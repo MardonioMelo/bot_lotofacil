@@ -94,7 +94,7 @@ class Computer
         }
 
         $game = [];
-        $classifier = new KNearestNeighbors(1);
+        $classifier = new KNearestNeighbors(2);
         foreach ($samples as $key => $sample) {
             $classifier->train($sample, $labels[$key]);
             $game[$key] = $classifier->predict(end($sample));

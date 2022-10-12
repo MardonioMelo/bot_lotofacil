@@ -2,6 +2,8 @@
 
 namespace Src;
 
+use Symfony\Component\DomCrawler\Crawler;
+
 class Calculation
 {
 
@@ -307,15 +309,35 @@ class Calculation
      */
     public function updateDataset()
     {
-        print_r("\nConsultando dados da API...");
-        $last = file_get_contents('https://loteriascaixa-api.herokuapp.com/api/lotofacil');
+        print_r("\nConsultando dados em servicebus2.caixa.gov.br");
+        $last = json_decode(file_get_contents('https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados?modalidade=Lotof%C3%A1cil'));
+        $crawler = new Crawler($last->html);
+
+        $values = $crawler->filter('table > tbody > tr')->each(function (Crawler $node) {
+            return $node->filter('td')->each(function (Crawler $node2) {
+                return $node2->text();
+            });
+        });
+
+        $matriz = [];
+        foreach ($values as $val) {
+            $val = array_filter($val);
+            if (isset($val[0]) && count($val) >= 16) {
+                $arr = [];
+                $arr['concurso'] = $val[0];
+                $arr['data'] = $val[1];
+                $arr['dezenas'] = array_slice($val, 2, 15);
+                $matriz[] = $arr;
+            }
+        }
+
         print_r("\nSalvando os dados consultados...");
-        Helper::saveFile($this->file_dataset, $last);
+        Helper::saveFile($this->file_dataset, json_encode($matriz));
         print_r("\nBase de dados atualizada!");
-        $json = json_decode($last, true);
-        sort($json);
-        $endGame = end($json);
+        $endGame = end($matriz);
         print_r("\nUltimo Concurso: {$endGame['concurso']} - {$endGame['data']}\n");
+
+        $this->positionsMargin();
     }
 
     /**
@@ -326,7 +348,6 @@ class Calculation
     public function setDataset()
     {
         $json = json_decode(file_get_contents($this->file_dataset), true);
-        sort($json);
         $this->dataset = array_map(function ($arr) {
             return array_map(function ($v) {
                 return (int) $v;
