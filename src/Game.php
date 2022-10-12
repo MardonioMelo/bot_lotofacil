@@ -52,7 +52,7 @@ class Game
      * @param integer $qtd_analysis Qtd a ser analisado
      * @return array
      */
-    private function generateGame($qtd_analysis = 2600): array
+    private function generateGame($qtd_analysis = 15): array
     {
         $jogo = [];
         $this->qtd_analysis = $qtd_analysis;
@@ -79,14 +79,17 @@ class Game
         $nLoops = 0;
         $numExist = Computer::exPredict($this->test);
         $getMarginList = $this->cal->getMarginList();
+        $end_wordlist = 1000000;
 
         echo Helper::title('Buscar Jogo na Wordlist');
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
         while ($stop === false) {
             $nLoops++;
-
-            $end_wordlist = rand($getMarginList['min'], $getMarginList['max']);
-            if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
+          
+           $end_wordlist = rand($getMarginList['min'], $getMarginList['max']);
+           if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
+            // $end_wordlist++;
+            // if (!empty($wordlist[$end_wordlist])) {
 
                 $check_game = explode(' ', $wordlist[$end_wordlist]);
                 $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist);
@@ -94,16 +97,16 @@ class Game
                 // if ($this->test) {
                 //     $countHits = count($this->cal->checkHits($this->end_game_test, $check_game));
                 //     // $hists++;
-                //     if ($countHits >= 14) {
-                //         // $hists++;
-                //         echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
-                //     }
+                //     //    if ($countHits > 10) {
+                //     //  $hists++;
+                //     //echo date("d/m/Y H:i:s") . " - Acertos: $countHits | Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
+                //     // }
                 //     //if ($hists == 10) $stop = true;
                 // }
 
                 // echo date("d/m/Y H:i:s") . " - Análise: $checkAnalysis | Loop: $end_wordlist | N.Loops: $nLoops\n";
                 // if ($checkAnalysis == 0 || !in_array($checkAnalysis, [1,2,5,4,17])) {
-                // if ($checkAnalysis == 0 || $countHits >= 14) {            
+                // if ($checkAnalysis == 0 && $countHits >= 11) {            
                 if ($checkAnalysis == 0) {
                     echo date("d/m/Y H:i:s") . " - ID do jogo: $end_wordlist \n";
                     echo date("d/m/Y H:i:s") . " - Loops: $nLoops \n";
@@ -146,7 +149,7 @@ class Game
         if ($unprecedented > 0) return 1;
 
         # Verificar se todos os números previstos estão no jogo
-        if (count(array_intersect($game, $numExist)) != count($numExist)) return 2;
+       if (count(array_intersect($game, $numExist)) != count($numExist)) return 2;
 
         # As dezenas devem estar dentro do máximo e mínimo para cada posição  
         $checkMaxMinGame = count($this->cal->checkMaxMinGame($all_games, $game)); //aqui deve avaliar todos os jogos desde o inicio
@@ -154,7 +157,7 @@ class Game
 
         # A soma das dezenas devem estar entre 166 e 220   
         $sumDezene = $this->cal->sumDezene($game);
-        if ($sumDezene < $margins['sumDezene']['min'] || $sumDezene > $margins['sumDezene']['max']) return 4;
+       if ($sumDezene < $margins['sumDezene']['min'] || $sumDezene > $margins['sumDezene']['max']) return 4;
 
         # O jogo deve ter em media 7 dezenas impares
         $qtdImparPar = $this->cal->qtdImparPar($game);
@@ -188,7 +191,7 @@ class Game
 
         # Deve pelo menos alguns dos números do jogo prime
         $prime_20 = count($checkPreviousExist['prime_20']);
-        if ($prime_20 < 11 || $prime_20 > 13) return 12;
+        if ($prime_20 < $margins['prime_20']['min'] || $prime_20 > $margins['prime_20']['max']) return 12;
 
         // # Deve ter alguns números que deverá sair
         $num_exist = count($checkPreviousExist['num_exist']);

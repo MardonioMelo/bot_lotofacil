@@ -77,7 +77,7 @@ class Computer
         $i = 0;
         $samples = [];
         foreach ($dataset as $balls) {
-            if (isset($nx[0]) && count($nx[0]) == 1) {
+            if (isset($nx[0]) && count($nx[0]) == 2) {
 
                 foreach ($balls as $key => $ball) {
                     $samples[$key][] = $nx[$key];
