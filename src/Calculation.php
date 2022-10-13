@@ -45,17 +45,23 @@ class Calculation
      * @param array $getDataSetString
      * @param array $game
      * @param bool $test
-     * @return int Retorna 0 se for inédito ou o número do sorteio se ja saiu 
+     * @return int Retorna 0 se for inédito ou o número do sorteio se ja saiu ou -1 se a quantidade de números não for igual a 15
      */
     public function unprecedented(array $getDataSetString, array $game, bool $test = false): int
     {
         $result = 0;
-        $game = trim(implode("-", $game));
-        if ($test) array_pop($getDataSetString);
+        $count = count($game);
 
-        if (in_array($game, $getDataSetString)) {
-            $result = array_flip($getDataSetString)[$game];
-        }
+        if($count >= 15){
+            $game = trim(implode("-", $game));
+            if ($test) array_pop($getDataSetString);
+    
+            if (in_array($game, $getDataSetString)) {
+                $result = array_flip($getDataSetString)[$game];
+            }
+        }else{
+            $result = -1;
+        }     
 
         return $result;
     }

@@ -26,10 +26,10 @@ class Helper
      * @param string $title Titulo
      * @return void
      */
-    public static function showTraining(array $training = [], int $modo = 1, $title="Margens")
+    public static function showTraining(array $training = [], int $modo = 1, $title = "Margens")
     {
-        if($modo == 1){
-            echo "\n". str_pad($title, 32, '-', STR_PAD_RIGHT). "|";
+        if ($modo == 1) {
+            echo "\n" . str_pad($title, 32, '-', STR_PAD_RIGHT) . "|";
             echo "\nAnálise-------------|Mín|Máx|Méd \n";
             foreach ($training as $name => $arrTrain) {
                 echo str_pad($name, 20, '-', STR_PAD_RIGHT);
@@ -42,20 +42,18 @@ class Helper
                 echo "\n";
             }
             echo "--------------------------------| \n";
-
-        }elseif($modo == 2){
-            echo "\n". str_pad($title, 26, '-', STR_PAD_RIGHT). "|";
+        } elseif ($modo == 2) {
+            echo "\n" . str_pad($title, 26, '-', STR_PAD_RIGHT) . "|";
             echo "\nAnálise-------------|Total \n";
             foreach ($training as $name => $arrTrain) {
                 echo str_pad($name, 20, '-', STR_PAD_RIGHT);
                 echo "|";
-                echo str_pad($arrTrain['analysis'], 3, ' ', STR_PAD_LEFT);             
+                echo str_pad($arrTrain['analysis'], 3, ' ', STR_PAD_LEFT);
                 echo "\n";
             }
             echo "--------------------------| \n";
-
-        }elseif($modo == 3){
-            echo "\n". str_pad($title, 36, '-', STR_PAD_RIGHT). "|";
+        } elseif ($modo == 3) {
+            echo "\n" . str_pad($title, 36, '-', STR_PAD_RIGHT) . "|";
             echo "\nAnálise-------------|Val|Mín|Máx|Méd \n";
             foreach ($training as $name => $arrTrain) {
                 echo str_pad($name, 20, '-', STR_PAD_RIGHT);
@@ -70,7 +68,7 @@ class Helper
                 echo "\n";
             }
             echo "------------------------------------| \n";
-        }  
+        }
     }
 
     /**
@@ -88,4 +86,66 @@ class Helper
         fclose($save_file);
     }
 
+    /**
+     * Limpar terminal
+     *
+     * @return void
+     */
+    public static function clearTerminal()
+    {
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            popen('cls', 'w');
+        } else {
+            popen('clear', 'w');
+        }
+    }
+
+    /**
+     * log Inicio
+     *
+     * @return void
+     */
+    public static function logInicio()
+    {
+        echo "\nInício --- " . date("H:i:s") . "\n";
+    }
+
+    /**
+     * log Inicio
+     *
+     * @return void
+     */
+    public static function logFim()
+    {
+        echo "\n\nFim --- " . date("H:i:s") . "\n";
+    }
+
+    /**
+     * Função para perguntar
+     *
+     * @return string
+     */
+    public static function inputResp()
+    {
+        $handle = fopen("php://stdin", "r");
+        do {
+            $line = fgets($handle);
+        } while ($line == '');
+        fclose($handle);
+        return self::removerQuebraLinha($line);
+    }
+
+    /**
+     * Remover quebra de linha
+     *
+     * @param string $str
+     * @return string
+     */
+    public static function removerQuebraLinha($str)
+    {
+        $str = str_replace("\n", "", $str);
+        $str = str_replace("\r", "", $str);
+        $str = preg_replace('/\s/', ' ', $str);
+        return $str;
+    }
 }
