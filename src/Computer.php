@@ -3,6 +3,9 @@
 namespace Src;
 
 use Src\Calculation;
+use Phpml\Classification\SVC;
+use Phpml\Math\Distance\Minkowski;
+use Phpml\SupportVectorMachine\Kernel;
 use Phpml\Classification\KNearestNeighbors;
 
 class Computer
@@ -41,7 +44,10 @@ class Computer
             $dataset = $cal->getLastGames($ngames + 1);
             $game_test = end($dataset);
             unset($dataset[array_key_last($dataset)]);
-            $game = self::predict($dataset, true);
+
+            // $game = array_merge(self::predict($dataset, 1), self::predict($dataset, 3));
+           $game = self::predict($dataset, 1);
+
             $gameUnique = array_unique($game);
             if ($log == true) {
                 $acertos = $cal->checkHits($game_test, $game);
@@ -54,7 +60,8 @@ class Computer
             }
         } else {
             $dataset = $cal->getLastGames($ngames);
-            $game = self::predict($dataset);
+            // $game = array_merge(self::predict($dataset, 1), self::predict($dataset, 3));
+            $game = self::predict($dataset, 1);
             $gameUnique = array_unique($game);
             if ($log == true) {
                 echo "\nPrevisto: " . implode('-', $game);
@@ -69,15 +76,18 @@ class Computer
     /**
      * Treinar e prever jogo
      * @param array $dataset dados para treino
+     * @param int $cla Escolha do classificador, 
+     * 0 = KNearestNeighbors, 1 = SVC(Kernel::LINEAR), 2 = new SVC(Kernel::RBF), 3 = new SVC(Kernel::SIGMOID
      * @return array
      */
-    public static function predict($dataset): array
+    public static function predict($dataset, $cla = 0): array
     {
+        $c_nx = [3, 15, 3, 8];
         $nx = [];
         $i = 0;
         $samples = [];
         foreach ($dataset as $balls) {
-            if (isset($nx[0]) && count($nx[0]) == 2) {
+            if (isset($nx[0]) && count($nx[0]) == $c_nx[$cla]) {
 
                 foreach ($balls as $key => $ball) {
                     $samples[$key][] = $nx[$key];
@@ -93,11 +103,21 @@ class Computer
             }
         }
 
+        if ($cla == 0) {
+            $classifier = new KNearestNeighbors(15);
+        } elseif ($cla == 1) {
+            $classifier = new SVC(Kernel::LINEAR, 1, 3, 6);
+        } elseif ($cla == 2) {
+            $classifier = new SVC(Kernel::RBF, 1, 3, 6);
+        } else {
+            $classifier = new SVC(Kernel::SIGMOID, 1, 3, 6);
+        }
+
         $game = [];
-        $classifier = new KNearestNeighbors(2);
         foreach ($samples as $key => $sample) {
             $classifier->train($sample, $labels[$key]);
             $game[$key] = $classifier->predict(end($sample));
+            print_r('*');
         }
 
         return $game;

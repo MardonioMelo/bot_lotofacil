@@ -52,16 +52,16 @@ class Calculation
         $result = 0;
         $count = count($game);
 
-        if($count >= 15){
+        if ($count >= 15) {
             $game = trim(implode("-", $game));
             if ($test) array_pop($getDataSetString);
-    
+
             if (in_array($game, $getDataSetString)) {
                 $result = array_flip($getDataSetString)[$game];
             }
-        }else{
+        } else {
             $result = -1;
-        }     
+        }
 
         return $result;
     }
@@ -332,7 +332,9 @@ class Calculation
                 $arr = [];
                 $arr['concurso'] = $val[0];
                 $arr['data'] = $val[1];
-                $arr['dezenas'] = array_slice($val, 2, 15);
+                $arr['dezenas'] = array_map(function ($v) {
+                    return substr($v, -2);
+                }, array_slice($val, 2, 15));
                 $matriz[] = $arr;
             }
         }
@@ -410,13 +412,15 @@ class Calculation
     }
 
     /**
-     * yes_15_exist - Verificar dezenas do concurso anterior que contem no jogo em atual
-     * not_10_exist - Verificar quais das 10 dezenas que não saiu no concurso anterior e que existem no jogo atual
-     * not_prim_exist - Verificar números primos que não saiu no ultimo concurso e existem no jogo atual
-     * yes_prim_exist - Verificar números primos que saiu no ultimo concurso e existem no jogo atual
-     * prim_exist - Verificar números primos existentes no jogo atual
-     * prime_20 - Verificar qual números estão no jogo de 20 números que mais pontuou
-     * num_exist - Verificar se existem outros números específicos
+     * ##### Este metódo retorna: 
+     * + yes_15_exist - Verificar dezenas do concurso anterior que contem no jogo em atual
+     * + not_10_exist - Verificar quais das 10 dezenas que não saiu no concurso anterior e que existem no jogo atual
+     * + not_prim_exist - Verificar números primos que não saiu no ultimo concurso e existem no jogo atual
+     * + yes_prim_exist - Verificar números primos que saiu no ultimo concurso e existem no jogo atual
+     * + prim_exist - Verificar números primos existentes no jogo atual
+     * + prime_20 - Verificar qual números estão no jogo de 20 números que mais pontuou
+     * + num_exist - Verificar se existem outros números específicos
+     * + num_sequence - Números sequenciais
      *
      * @param array $endGame
      * @param array $jogo

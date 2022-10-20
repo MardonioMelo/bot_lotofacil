@@ -85,11 +85,11 @@ class Game
         echo date("d/m/Y H:i:s") . " - Inicio da busca na Wordlist... \n";
         while ($stop === false) {
             $nLoops++;
-          
-           $end_wordlist = rand($getMarginList['min'], $getMarginList['max']);
-           if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
-            // $end_wordlist++;
-            // if (!empty($wordlist[$end_wordlist])) {
+
+            $end_wordlist = rand($getMarginList['min'], $getMarginList['max']);
+            if (!empty($wordlist[$end_wordlist]) && $nLoops <= $getMarginList['diff']) {
+                // $end_wordlist++;
+                // if (!empty($wordlist[$end_wordlist])) {
 
                 $check_game = explode(' ', $wordlist[$end_wordlist]);
                 $checkAnalysis = $this->checkAnalysis($check_game, $all_games, $laterNumbers, $countFrequency, $endGame, $getDataSetString, $margins, $numExist);
@@ -149,7 +149,8 @@ class Game
         if ($unprecedented > 0) return 1;
 
         # Verificar se todos os números previstos estão no jogo
-       if (count(array_intersect($game, $numExist)) != count($numExist)) return 2;
+        if (count(array_intersect($game, $numExist)) != count($numExist)) return 2;
+        //    if (count(array_intersect($game, $numExist)) != 15) return 2;
 
         # As dezenas devem estar dentro do máximo e mínimo para cada posição  
         $checkMaxMinGame = count($this->cal->checkMaxMinGame($all_games, $game)); //aqui deve avaliar todos os jogos desde o inicio
@@ -157,7 +158,7 @@ class Game
 
         # A soma das dezenas devem estar entre 166 e 220   
         $sumDezene = $this->cal->sumDezene($game);
-       if ($sumDezene < $margins['sumDezene']['min'] || $sumDezene > $margins['sumDezene']['max']) return 4;
+        if ($sumDezene < $margins['sumDezene']['min'] || $sumDezene > $margins['sumDezene']['max']) return 4;
 
         # O jogo deve ter em media 7 dezenas impares
         $qtdImparPar = $this->cal->qtdImparPar($game);
