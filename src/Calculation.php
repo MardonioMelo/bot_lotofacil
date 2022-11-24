@@ -345,7 +345,7 @@ class Calculation
         $endGame = end($matriz);
         print_r("\nUltimo Concurso: {$endGame['concurso']} - {$endGame['data']}\n");
 
-        $this->positionsMargin();
+       // $this->positionsMargin();
     }
 
     /**
@@ -367,13 +367,15 @@ class Calculation
      * Obter uma fração dos últimos concursos
      *
      * @param integer $qtd
+     * @param int $preOffset Remove últimos registros antes de aplicar o limite
      * @return array
      */
-    public function getLastGames(int $limit): array
+    public function getLastGames(int $limit, int $preOffset = 0): array
     {
-        return $limit >= count($this->dataset) ?
-            $this->dataset :
-            array_slice($this->dataset, count($this->dataset) - $limit, $limit, true);
+        $dataset = ($preOffset > 0? array_slice($this->dataset, 0, count($this->dataset) - $preOffset, true): $this->dataset);
+        return $limit >= count($dataset) ?
+            $dataset :
+            array_slice($dataset, count($dataset) - $limit, $limit, true);
     }
 
     /**
@@ -610,12 +612,12 @@ class Calculation
 
     /**
      * Obter wordlist de todos os possíveis jogos
-     *
+     * @param string $file caminho do arquivo 
      * @return array
      */
-    public function getWordlist(): array
+    public function getWordlist($file = 'wordlist_lotofacil.txt'): array
     {
-        $file = 'wordlist_lotofacil.txt'; //3.268.760 combinações   
+        //$file = 'wordlist_lotofacil.txt'; //3.268.760 combinações   
         $arr = [];
 
         if (file_exists($file)) {

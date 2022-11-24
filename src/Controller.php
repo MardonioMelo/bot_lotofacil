@@ -41,6 +41,7 @@ class Controller
             . "\n 5 - Jogar em modo teste múltiplas vzs."
             . "\n 6 - Gerar jogo com método 3x3"
             . "\n 66- Gerar jogo com método 3x3 em modo teste"
+            . "\n 7- Outros."
             . "\n 0 - Sair."
             . "\n\nOpçao: ";
 
@@ -193,5 +194,17 @@ class Controller
         echo Helper::title($this->title . $this->subtitle);
         $game = new Calculation();
         $game->game3x3(true);
+    }
+
+    /**
+     * Jogar em modo teste.
+     *
+     * @return void
+     */
+    public function option7()
+    {
+        echo Helper::title($this->title . $this->subtitle);
+        $game = new Game();
+        $game->other();
     }
 }
