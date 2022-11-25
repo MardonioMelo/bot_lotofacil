@@ -11,7 +11,7 @@ class Computer
 {
 
     static $data = [];
-    static $max = [60, 59, 57, 56, 52, 49, 47, 46, 45, 44];
+    static $max = [80, 61, 60, 59, 57, 56, 52, 49, 47, 46, 45, 44];
     static $med = [43, 41, 40, 38, 37, 36, 33, 31, 29, 28];
     static $min = [25, 23];
 
@@ -42,22 +42,22 @@ class Computer
         // self::generateTraining(400, 2000, 1901);
         // self::generateTraining(400, 2100, 2001);
         // self::generateTraining(400, 2200, 2101);
+        // self::generateTraining(400, 5, 0);
 
+        // Atualizar treinamento
+        //self::updateTraining(400, ['training5.json']);
 
-        //atualizar treinamento
-        //self::updateTraining();
+        // Últimos jogos 
+        $dataset = (new Calculation())->getLastGames(400);
 
-        // // Últimos jogos 
-        // $dataset = (new Calculation())->getLastGames(400);
+        // Procurar pelos grupos ideais
+        $groups = self::searchGrouping($dataset, 'training.json');
+        print_r($groups);        
 
-        // // Procurar pelos grupos ideais
-        // $groups = self::searchGrouping($dataset, 'training.json');
-        // print_r($groups);        
-
-        // // Prever
-        // foreach ($groups['grouping'] as $c_nx) {
-        //     self::exPredict($dataset, $c_nx, [1,2,5,7,8,9,10,11,12,13,18,20,21,22,25]);
-        // }
+        // Prever
+        foreach ($groups['grouping'] as $c_nx) {
+            self::exPredict($dataset, $c_nx, [1,2,5,7,8,9,10,11,12,13,18,20,21,22,25]);
+        }
 
         echo date("d/m/Y H:i:s") . "\n - Fim \n";
     }
@@ -91,7 +91,10 @@ class Computer
             }
         }
         $result['grouping'] = array_unique($grouping);
-        $result = array_map(function ($v) { arsort($v); return $v; }, $result);          
+        $result = array_map(function ($v) {
+            arsort($v);
+            return $v;
+        }, $result);
 
         return $result;
     }
@@ -99,12 +102,11 @@ class Computer
     /**
      * Atualizar treinamento
      *
-     * @param integer $ngames
-     * @param int $start
-     * @param int $end
+     * @param int $ngames
+     * @param array $files Arquivos selecionados para importar na atualização, se for vazio, todos os aquivos da pasta temp serão importados
      * @return void
      */
-    public static function updateTraining($ngames = 400, $start = null, $end = null)
+    public static function updateTraining($ngames = 400, $files = [])
     {
         $file = "training.json";
         $json = json_decode(file_get_contents($file), true);
@@ -113,11 +115,16 @@ class Computer
         $dir = dir($path);
 
         while ($file_t = $dir->read()) {
-            if (!in_array($file_t, ['.', '..'])) {
+            if (!in_array($file_t, ['.', '..']) && (empty($files) || in_array($file_t, $files))) {
                 $json_t = json_decode(file_get_contents($path . $file_t), true);
 
                 foreach ($json_t['training'][$ngames] as $c_nx => $data) {
-                    $json['training'][$ngames][$c_nx] = $json['training'][$ngames][$c_nx] + $json_t['training'][$ngames][$c_nx];
+                    if(isset($json['training'][$ngames][$c_nx])){
+                        $json['training'][$ngames][$c_nx] = $json['training'][$ngames][$c_nx] + $json_t['training'][$ngames][$c_nx];         
+                    }else{
+                        $json['training'][$ngames][$c_nx] = $json_t['training'][$ngames][$c_nx];         
+                    }
+                    
                     $json['qtd_game_cnx'][$ngames][$c_nx] = count($json['training'][$ngames][$c_nx]);
                 }
             }
@@ -131,7 +138,7 @@ class Computer
             $gmin[$c_nx] = min($data)['contest'];
         }
 
-        $json['info']['gmin'] = max($gmin);
+        $json['info']['gmin'] = min($gmin);
         $json['info']['gmax'] = max($gmax);
 
         Helper::saveFile($file, json_encode($json));
@@ -146,15 +153,18 @@ class Computer
      * @param int $limitOffSet Remove últimos registros antes de aplicar o limite
      * @return void
      */
-    public static function generateTraining($ngames = 400, $preOffset = 500, $limitOffSet = 0): void
+    public static function generateTraining($ngames = 400, $preOffset = 1, $limitOffSet = 0): void
     {
         echo date("d/m/Y H:i:s") . " - Inicio da geração do treinamento de $preOffset jogos \n";
         $cal = new Calculation();
         $name_file = "temp/training$preOffset.json";
+        $groups = array_merge(self::$min, self::$med, self::$max);
 
         while ($preOffset >= $limitOffSet) {
 
-            foreach (array_merge(self::$min, self::$med, self::$max) as $c_nx) {
+            // $c_nx = 23;
+            // while ($c_nx <= 100) {
+            foreach ($groups as $c_nx) {
 
                 $dataset = $cal->getLastGames($ngames + 1, $preOffset);
                 $game_test = end($dataset);
@@ -177,6 +187,8 @@ class Computer
                     arsort(self::$data['unique'][$ngames]);
                 }
             }
+            //$c_nx++;
+            //}
             $preOffset--;
         }
 
