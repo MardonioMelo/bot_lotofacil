@@ -16,63 +16,70 @@ class Computer
     static $min = [25, 23];
 
     /**
-     * Gerar previsão de jogo de forma simplificada para testar os parâmetros
+     * Gerar previsão de jogo
      * 
-     * @param bool $test Modo de teste
      * @return void
      */
-    public static function run($test = false): void
+    public static function run(): void
     {
-
-        // self::exPredict($test, 400, 28);
+        echo date("d/m/Y H:i:s") . " - Inicio \n";
 
         // $nGames = 400;
         // foreach (array_merge(self::$max, self::$med, self::$min) as $val) {          
-        //     self::exPredict($test, $nGames, $val, 0);
+        //     self::exPredict($dataset, $c_nx, [3,6,7,8,9,11,12,13,15,16,18,19,20,21,25]);
         // }
 
-        // Gerar arquivo de treino
-        // self::generateTraining(400, 10, 0);
-        // self::generateTraining(400, 15, 0);
-        // self::generateTraining(400, 20, 0);
-        // self::generateTraining(400, 25, 0);
-        // self::generateTraining(400, 30, 0);
-        // self::generateTraining(400, 60, 0);
-        // self::generateTraining(400, 400, 0);
+        // Gerar arquivos de treino
+        // self::generateTraining(400, 1100, 1001);
+        // self::generateTraining(400, 1200, 1101);
+        // self::generateTraining(400, 1300, 1201);
+        // self::generateTraining(400, 1400, 1301);
+        // self::generateTraining(400, 1500, 1401);
+        // self::generateTraining(400, 1600, 1501);
+        // self::generateTraining(400, 1700, 1601);
+        // self::generateTraining(400, 1800, 1701);
+        // self::generateTraining(400, 1900, 1801);
+        // self::generateTraining(400, 2000, 1901);
+        // self::generateTraining(400, 2100, 2001);
+        // self::generateTraining(400, 2200, 2101);
 
-        // self::generateTraining(400, 1000, 0);
-        // Prever resultado
-        $groups = self::searchGrouping(400, 0, 'training1000.json');
-        print_r($groups);
 
-        // foreach ($groups as $c_nx) {
-        //     self::exPredict($test, 400, $c_nx);
+        //atualizar treinamento
+        //self::updateTraining();
+
+        // // Últimos jogos 
+        // $dataset = (new Calculation())->getLastGames(400);
+
+        // // Procurar pelos grupos ideais
+        // $groups = self::searchGrouping($dataset, 'training.json');
+        // print_r($groups);        
+
+        // // Prever
+        // foreach ($groups['grouping'] as $c_nx) {
+        //     self::exPredict($dataset, $c_nx, [1,2,5,7,8,9,10,11,12,13,18,20,21,22,25]);
         // }
 
-        echo "\n Fim \n";
+        echo date("d/m/Y H:i:s") . "\n - Fim \n";
     }
 
     /**
      * Procurar pelo agrupamento correto
      *
-     * @param int $ngames Número de jogos que deve avaliar
-     * @param int $preOffset Remove últimos registros antes de aplicar o limite
+     * @param array $dataset Últimos jogos - Ex.: (new Calculation())->getLastGames(400)
      * @return array Array com os números de agrupamentos eleitos
      */
-    public static function searchGrouping($ngames = 400, $preOffset = 0, $name_file = 'training.json'): array
+    public static function searchGrouping($dataset, $name_file = 'training.json'): array
     {
-        $cal = new Calculation();
-        $dataset = $cal->getLastGames($ngames, $preOffset);
         $result = [];
-
         $grouping = [];
+        $ngames = count($dataset);
         $training = json_decode(file_get_contents($name_file), true);
         foreach ($training['training'][$ngames] as $c_nx => $data) {
 
-            foreach ($data as $contest => $dataGame) {
+            foreach ($data as $dataGame) {
                 $game = self::predict($dataset, 1, $c_nx);
                 $gameUnique = array_unique($game);
-                $acertos = $cal->checkHits($dataGame['game_test'], $gameUnique);
+                $acertos = self::checkHits($dataGame['game_test'], $gameUnique);
                 $countAcertos = count($acertos);
 
                 if ($countAcertos >= 11) {
@@ -83,13 +90,53 @@ class Computer
                 }
             }
         }
+        $result['grouping'] = array_unique($grouping);
+        $result = array_map(function ($v) { arsort($v); return $v; }, $result);          
 
-        print_r($result);
-
-        return array_unique($grouping);
+        return $result;
     }
 
-    
+    /**
+     * Atualizar treinamento
+     *
+     * @param integer $ngames
+     * @param int $start
+     * @param int $end
+     * @return void
+     */
+    public static function updateTraining($ngames = 400, $start = null, $end = null)
+    {
+        $file = "training.json";
+        $json = json_decode(file_get_contents($file), true);
+
+        $path = "temp/";
+        $dir = dir($path);
+
+        while ($file_t = $dir->read()) {
+            if (!in_array($file_t, ['.', '..'])) {
+                $json_t = json_decode(file_get_contents($path . $file_t), true);
+
+                foreach ($json_t['training'][$ngames] as $c_nx => $data) {
+                    $json['training'][$ngames][$c_nx] = $json['training'][$ngames][$c_nx] + $json_t['training'][$ngames][$c_nx];
+                    $json['qtd_game_cnx'][$ngames][$c_nx] = count($json['training'][$ngames][$c_nx]);
+                }
+            }
+        }
+        $dir->close();
+
+        $gmax = [];
+        $gmin = [];
+        foreach ($json['training'][$ngames] as $c_nx => $data) {
+            $gmax[$c_nx] = max($data)['contest'];
+            $gmin[$c_nx] = min($data)['contest'];
+        }
+
+        $json['info']['gmin'] = max($gmin);
+        $json['info']['gmax'] = max($gmax);
+
+        Helper::saveFile($file, json_encode($json));
+        self::$data = [];
+    }
 
     /**
      * Gerar dados do trinamento previsão de jogo
@@ -99,11 +146,11 @@ class Computer
      * @param int $limitOffSet Remove últimos registros antes de aplicar o limite
      * @return void
      */
-    public static function generateTraining($ngames = 400, $preOffset = 10, $limitOffSet = 0): void
+    public static function generateTraining($ngames = 400, $preOffset = 500, $limitOffSet = 0): void
     {
         echo date("d/m/Y H:i:s") . " - Inicio da geração do treinamento de $preOffset jogos \n";
         $cal = new Calculation();
-        $name_file = "training$preOffset.json";
+        $name_file = "temp/training$preOffset.json";
 
         while ($preOffset >= $limitOffSet) {
 
@@ -116,7 +163,7 @@ class Computer
                 $game = self::predict($dataset, 1, $c_nx);
 
                 $gameUnique = array_unique($game);
-                $acertos = $cal->checkHits($game_test, $gameUnique);
+                $acertos = self::checkHits($game_test, $gameUnique);
 
                 if (count($acertos) >= 11) {
                     $concurso = $key_last_game_test + 1;
@@ -130,7 +177,6 @@ class Computer
                     arsort(self::$data['unique'][$ngames]);
                 }
             }
-
             $preOffset--;
         }
 
@@ -142,53 +188,36 @@ class Computer
     /**
      * Gerar previsão de jogo
      *
-     * @param bool $test Modo de teste
-     * @param integer $ngames Número de jogos que deve avaliar
+     * @param array $dataset Últimos jogos - Ex.: (new Calculation())->getLastGames(400)
      * @param int $c_nx Agrupamento - Quantidade de jogos que deve agrupar
-     * @param int $preOffset Remove últimos registros antes de aplicar o limite
+     * @param array $game_test Um jogo para testar os acertos - As dezenas que saíram no próximo jogo e que não estão no dataset.json
      * @return array
      */
-    public static function exPredict($test = false, $ngames = 400, $c_nx = null, $preOffset = 0): array
+    public static function exPredict($dataset, $c_nx, $game_test = []): array
     {
-        $cal = new Calculation();
-
-        if ($test) {
-            $dataset = $cal->getLastGames($ngames + 1, $preOffset);
-            $game_test = end($dataset);
-            $key_last_game_test = array_key_last($dataset);
-            unset($dataset[$key_last_game_test]);
+        if (count($game_test) >= 15) {
             $game = self::predict($dataset, 1, $c_nx);
-
             $gameUnique = array_unique($game);
-            $acertos = $cal->checkHits($game_test, $gameUnique);
-            $concurso = $key_last_game_test + 1;
+            $acertos = self::checkHits($game_test, $gameUnique);
 
             if (count($acertos) >= 11) {
                 echo Helper::title('Previsão de Números')
-                    . "\nConcurso: " . $concurso
-                    . "\nJogos: " . $ngames
-                    . "\nPrevisto: " . implode('-', $game)
+                    . "\nJogos: " . count($dataset)
+                    . "\nGrupo: " . $c_nx
                     . "\nCorreto: " . implode('-', $game_test)
-                    . "\nDistintos: " . implode('-', $gameUnique) . ' (' . count($gameUnique) . ')'
+                    . "\nPrevisto: " . implode('-', $gameUnique) . ' (' . count($gameUnique) . ')'
                     . "\nAcertos: " . implode('-', $acertos) . ' (' . count($acertos) . ')'
-                    . "\nSaiu no Anterior: " . count(array_intersect(end($dataset), $game_test))
-                    . "\nc_nx: " . $c_nx
                     . "\n";
             }
         } else {
-            $dataset = $cal->getLastGames($ngames);
             $game = self::predict($dataset, 1, $c_nx);
             $gameUnique = array_unique($game);
 
-           // $acertos = $cal->checkHits([2,3,4,7,8,10,11,12,13,19,20,21,22,23,24], $gameUnique); // 2666
-          //  if (count($acertos) >= 11) {
-                echo Helper::title('Previsão de Números')
-                    . "\nPrevisto: " . implode('-', $game)
-                    . "\nDistintos: " . implode('-', $gameUnique) . ' (' . count($gameUnique) . ')'
-              //      . "\nAcertos: " . implode('-', $acertos) . ' (' . count($acertos) . ')'
-                    . "\nc_nx: " . $c_nx
-                    . "\n";
-            // }
+            echo Helper::title('Previsão de Números')
+                . "\nJogos: " . count($dataset)
+                . "\nGrupo: " . $c_nx
+                . "\nPrevisto: " . implode('-', $gameUnique) . ' (' . count($gameUnique) . ')'
+                . "\n";
         }
 
         return $gameUnique;
@@ -198,7 +227,10 @@ class Computer
      * Treinar e prever jogo
      * @param array $dataset dados para treino
      * @param int $cla Escolha do classificador, 
-     * 0 = KNearestNeighbors, 1 = SVC(Kernel::LINEAR), 2 = new SVC(Kernel::RBF), 3 = new SVC(Kernel::SIGMOID
+     * 0 = KNearestNeighbors, 
+     * 1 = SVC(Kernel::LINEAR), 
+     * 2 = new SVC(Kernel::RBF), 
+     * 3 = new SVC(Kernel::SIGMOID
      * @param int $c_nx Quantidade de jogos que deve agrupar
      * @return array
      */
@@ -243,5 +275,16 @@ class Computer
         }
 
         return $game;
+    }
+
+    /**
+     * Verificar acertos referente ao próximo jogo de teste
+     *
+     * @param array $endGameTest
+     * @param array $jogo
+     */
+    public static function checkHits(array $endGameTest, array $jogo): array
+    {
+        return array_intersect($endGameTest, $jogo);
     }
 }

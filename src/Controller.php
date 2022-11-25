@@ -36,7 +36,6 @@ class Controller
             . "\n 2 - Jogar."
             . "\n 22- Jogar em modo teste."
             . "\n 3 - Modo ML."
-            . "\n 33- Modo de teste ML."
             . "\n 4 - Atualizar Dataset."
             . "\n 5 - Jogar em modo teste múltiplas vzs."
             . "\n 6 - Gerar jogo com método 3x3"
@@ -134,17 +133,6 @@ class Controller
     {
         echo Helper::title($this->title);
         Computer::run();
-    }
-
-    /**
-     * Modo de teste ML
-     *
-     * @return void
-     */
-    public function option33()
-    {
-        echo Helper::title($this->title . $this->subtitle);
-        Computer::run(true);
     }
 
     /**
