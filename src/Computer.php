@@ -24,9 +24,11 @@ class Computer
     {
         echo date("d/m/Y H:i:s") . " - Inicio \n";
 
+        $corect = [2, 3, 4, 5, 7, 8, 10, 11, 12, 14, 15, 20, 22, 23, 24];
+
         // $dataset = (new Calculation())->getLastGames(400);
         // foreach (array_merge(self::$max, self::$med, self::$min) as $c_nx) {          
-        //     self::exPredict($dataset, $c_nx, [1,2,5,7,8,9,10,11,12,13,18,20,21,22,25]);
+        //     self::exPredict($dataset, $c_nx, $corect);
         // }
 
         // Gerar arquivos de treino
@@ -45,24 +47,55 @@ class Computer
         // self::generateTraining(400, 2100, 2001);
         // self::generateTraining(400, 2200, 2101);
         // self::generateTraining(400, 2201, 0);
-       
 
         // Atualizar treinamento
-       self::updateTraining(400, ['up']);
+        // self::updateTraining(400);
+        // self::updateTraining(400, ['training2201.json']);
+        // self::updateTraining(400, ['not_file']);
 
         // Últimos jogos 
         // $dataset = (new Calculation())->getLastGames(400);
 
-        // // Procurar pelos grupos ideais
+        // Procurar pelos grupos e dezenas ideais
         // $groups = self::searchGrouping($dataset, 'training.json');
-        // print_r($groups);        
+        // Helper::saveFile('predict.json', json_encode($groups));
+        // print_r($groups);
 
-        // // Prever
+        // Prever
         // foreach ($groups['grouping'] as $c_nx) {
-        //     self::exPredict($dataset, $c_nx, [1,2,5,7,8,9,10,11,12,13,18,20,21,22,25]);
+        //     self::exPredict($dataset, $c_nx, $corect);
         // }
 
-        echo date("d/m/Y H:i:s") . "\n - Fim \n";
+        // Procedimentos para novos jogos -------------------------------------->
+
+        # Gerar arquivos de treino
+        self::generateTraining(400, 0, 0);
+
+        # Atualizar treinamento
+        echo date("d/m/Y H:i:s") . " - Atualizando base de dados de treinamento \n";
+        self::updateTraining(400, ['training0.json']);
+
+        # Últimos jogos 
+        echo date("d/m/Y H:i:s") . " - Obtendo lista dos últimos jogos \n";
+        $dataset = (new Calculation())->getLastGames(400);
+
+        # Gerar predict
+        echo date("d/m/Y H:i:s") . " - Gerando previsão\n";
+        $groups = self::searchGrouping($dataset, 'training.json');
+        Helper::saveFile('predict.json', json_encode($groups));
+
+        # Selecionar dezenas mais previstas
+        echo date("d/m/Y H:i:s") . " - Selecionando dezenas mais previstas\n";
+        $predict = json_decode(file_get_contents('predict.json'), true);
+        $tens = array_keys(array_slice($predict['hits_by_tens'], 0, 15, true));
+        sort($tens);
+
+        echo "\nPrevisão do Jogo: " . array_key_last($dataset) + 1
+            . "\nPrevisto: " . implode('-', $tens)
+            . "\nAcertos: " . count(self::checkHits($corect, $tens))
+            . "\n";
+
+        echo "\n" . date("d/m/Y H:i:s") . " - Fim \n";
     }
 
     /**
@@ -86,18 +119,24 @@ class Computer
                 $countAcertos = count($acertos);
 
                 if ($countAcertos >= 11) {
-                    $name = $countAcertos . '_acertos';
-                    $result['total_acertos'][$c_nx] = (empty($result['total_acertos'][$c_nx]) ? 1 : $result['total_acertos'][$c_nx] + 1);
+                    $name = "groups_with_{$countAcertos}_hits";
+                    $result['hits_by_group'][$c_nx] = (empty($result['hits_by_group'][$c_nx]) ? 1 : $result['hits_by_group'][$c_nx] + 1);
                     $result[$name][$c_nx] = (empty($result[$name][$c_nx]) ? 1 : $result[$name][$c_nx] + 1);
                     $grouping[] = $c_nx;
+
+                    foreach ($acertos as $dezena) {
+                        $result['hits_by_tens'][$dezena] = (isset($result['hits_by_tens'][$dezena]) ? $result['hits_by_tens'][$dezena] + 1 : 1);
+                        $result['hits_by_tens_group'][$c_nx][$dezena] = (isset($result['hits_by_tens_group'][$c_nx][$dezena]) ? $result['hits_by_tens_group'][$c_nx][$dezena] + 1 : 1);
+                    }
                 }
             }
+
+            arsort($result['hits_by_tens_group'][$c_nx]);
         }
-        $result['grouping'] = array_unique($grouping);
-        $result = array_map(function ($v) {
-            arsort($v);
-            return $v;
-        }, $result);
+        $result['grouping'] = array_values(array_unique($grouping));
+
+        arsort($result['hits_by_tens']);
+        arsort($result['hits_by_group']);
 
         return $result;
     }
@@ -122,10 +161,10 @@ class Computer
                 $json_t = json_decode(file_get_contents($path . $file_t), true);
 
                 foreach ($json_t['training'][$ngames] as $c_nx => $data) {
-                    if(isset(self::$data['training'][$ngames][$c_nx])){
-                        self::$data['training'][$ngames][$c_nx] = self::$data['training'][$ngames][$c_nx] + $json_t['training'][$ngames][$c_nx];         
-                    }else{
-                        self::$data['training'][$ngames][$c_nx] = $json_t['training'][$ngames][$c_nx];         
+                    if (isset(self::$data['training'][$ngames][$c_nx])) {
+                        self::$data['training'][$ngames][$c_nx] = self::$data['training'][$ngames][$c_nx] + $json_t['training'][$ngames][$c_nx];
+                    } else {
+                        self::$data['training'][$ngames][$c_nx] = $json_t['training'][$ngames][$c_nx];
                     }
                 }
             }
@@ -146,7 +185,7 @@ class Computer
      */
     public static function generateTraining($ngames = 400, $preOffset = 1, $limitOffSet = 0): void
     {
-        echo date("d/m/Y H:i:s") . " - Inicio da geração do treinamento de $preOffset jogos \n";
+        echo date("d/m/Y H:i:s") . " - Inicio do treinamento \n";
         $cal = new Calculation();
         $save_file = "temp/training$preOffset.json";
         $groups = array_merge(self::$min, self::$med, self::$max);
@@ -171,7 +210,7 @@ class Computer
                     self::$data['training'][$ngames][$c_nx][$concurso]['contest'] = $concurso;
                     self::$data['training'][$ngames][$c_nx][$concurso]['game_test'] = $game_test;
                     self::$data['training'][$ngames][$c_nx][$concurso]['hits'] = count($acertos);
-                    self::$data['training'][$ngames][$c_nx][$concurso]['correct_tens'] = $acertos;                    
+                    self::$data['training'][$ngames][$c_nx][$concurso]['correct_tens'] = $acertos;
                 }
             }
             //$c_nx++;
@@ -181,36 +220,39 @@ class Computer
 
         self::sevaTraining($save_file);
         self::$data = [];
-        echo date("d/m/Y H:i:s") . " - Fim da geração do treinamento \n";
+        echo date("d/m/Y H:i:s") . " - Fim do treinamento \n";
     }
-  
+
     /**
      * Prepara e salva dados de treinamento
      *
      * @param string $file Nome do arquivo onde deve salvar
      * @return void
      */
-    public static function sevaTraining($file)
+    public static function sevaTraining($file): void
     {
         $gmax = [];
         $gmin = [];
         $arr_ngames = array_keys(self::$data['training']);
-        
+
         foreach ($arr_ngames as $ngames) {
             foreach (self::$data['training'][$ngames] as $c_nx => $data) {
-                self::$data['qtd_game_cnx'][$ngames][$c_nx] = count(self::$data['training'][$ngames][$c_nx]);   
-                self::$data['unique'][$ngames][] = $c_nx;        
                 $gmin[$c_nx] = min($data)['contest'];
                 $gmax[$c_nx] = max($data)['contest'];
+
+                self::$data['unique'][$ngames][] = $c_nx;
+                self::$data['qtd_game_cnx'][$ngames][$c_nx] = count(self::$data['training'][$ngames][$c_nx]);
             }
-    
+
             arsort(self::$data['qtd_game_cnx'][$ngames]);
             self::$data['unique'][$ngames] = array_unique(self::$data['unique'][$ngames]);
+
             sort(self::$data['unique'][$ngames]);
             self::$data['unique'][$ngames] = array_values(self::$data['unique'][$ngames]);
+
             self::$data['info']['gmin'] = min($gmin);
-            self::$data['info']['gmax'] = max($gmax); 
-        }        
+            self::$data['info']['gmax'] = max($gmax);
+        }
 
         Helper::saveFile($file, json_encode(self::$data));
     }
@@ -310,11 +352,11 @@ class Computer
     /**
      * Verificar acertos referente ao próximo jogo de teste
      *
-     * @param array $endGameTest
+     * @param array $gameTest
      * @param array $jogo
      */
-    public static function checkHits(array $endGameTest, array $jogo): array
+    public static function checkHits(array $gameTest, array $jogo): array
     {
-        return array_intersect($endGameTest, $jogo);
+        return array_intersect($gameTest, $jogo);
     }
 }
