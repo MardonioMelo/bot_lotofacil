@@ -14,6 +14,7 @@ class Computer
     static $max = [80, 61, 60, 59, 57, 56, 52, 49, 47, 46, 45, 44];
     static $med = [43, 41, 40, 38, 37, 36, 33, 31, 29, 28];
     static $min = [25, 23];
+    static $cla = 0;
 
     /**
      * Gerar previsão de jogo
@@ -27,9 +28,14 @@ class Computer
         $corect = [2, 3, 4, 5, 7, 8, 10, 11, 12, 14, 15, 20, 22, 23, 24];
 
         // $dataset = (new Calculation())->getLastGames(400);
-        // foreach (array_merge(self::$max, self::$med, self::$min) as $c_nx) {          
-        //     self::exPredict($dataset, $c_nx, $corect);
+        // foreach (array_merge(self::$max, self::$med, self::$min) as $c_nx) {
+        //     $dezenas = self::exPredict($dataset, $c_nx, $corect);
+        //     foreach ($dezenas as $key => $dezena) {
+        //         self::$data[$dezena] = empty(self::$data[$dezena])? 1: self::$data[$dezena] + 1;
+        //     }
         // }
+        // krsort(self::$data);
+        // print_r(self::$data);
 
         // Gerar arquivos de treino
         // self::generateTraining(400, 5, 0);
@@ -69,13 +75,13 @@ class Computer
         // Procedimentos para novos jogos -------------------------------------->
 
         # Gerar arquivos de treino
-        self::generateTraining(400, 0, 0);
+        // self::generateTraining(400, 0, 0);
 
-        # Atualizar treinamento
-        echo date("d/m/Y H:i:s") . " - Atualizando base de dados de treinamento \n";
-        self::updateTraining(400, ['training0.json']);
+        // # Atualizar treinamento
+        // echo date("d/m/Y H:i:s") . " - Atualizando base de dados de treinamento \n";
+        // self::updateTraining(400, ['training0.json']);
 
-        # Últimos jogos 
+        // # Últimos jogos 
         echo date("d/m/Y H:i:s") . " - Obtendo lista dos últimos jogos \n";
         $dataset = (new Calculation())->getLastGames(400);
 
@@ -84,16 +90,23 @@ class Computer
         $groups = self::searchGrouping($dataset, 'training.json');
         Helper::saveFile('predict.json', json_encode($groups));
 
-        # Selecionar dezenas mais previstas
-        echo date("d/m/Y H:i:s") . " - Selecionando dezenas mais previstas\n";
-        $predict = json_decode(file_get_contents('predict.json'), true);
-        $tens = array_keys(array_slice($predict['hits_by_tens'], 0, 15, true));
-        sort($tens);
+        // # Selecionar dezenas mais previstas
+        // echo date("d/m/Y H:i:s") . " - Selecionando dezenas mais previstas\n";
+        // $predict = json_decode(file_get_contents('predict.json'), true);
+        // $tens = array_keys(array_slice($predict['hits_by_tens'], 0, 15, true));
+        // sort($tens);
 
-        echo "\nPrevisão do Jogo: " . array_key_last($dataset) + 1
-            . "\nPrevisto: " . implode('-', $tens)
-            . "\nAcertos: " . count(self::checkHits($corect, $tens))
-            . "\n";
+        // // Metodo do match dos 15 primeiros em cada grupo para pegar um grupo promissor
+        // $match = [];
+        // foreach ($predict['hits_by_tens_group'] as $group => $tens_group) {
+        //    $match[$group] = count(self::checkHits($tens_group, $tens));
+        // }
+        // print_r($match);
+
+        // echo "\nPrevisão do Jogo: " . array_key_last($dataset) + 1
+        //     . "\nPrevisto: " . implode('-', $tens)
+        //     . "\nAcertos: " . count(self::checkHits($corect, $tens))
+        //     . "\n";
 
         echo "\n" . date("d/m/Y H:i:s") . " - Fim \n";
     }
@@ -113,7 +126,7 @@ class Computer
         foreach ($training['training'][$ngames] as $c_nx => $data) {
 
             foreach ($data as $dataGame) {
-                $game = self::predict($dataset, 1, $c_nx);
+                $game = self::predict($dataset, self::$cla, $c_nx);
                 $gameUnique = array_unique($game);
                 $acertos = self::checkHits($dataGame['game_test'], $gameUnique);
                 $countAcertos = count($acertos);
@@ -128,6 +141,8 @@ class Computer
                         $result['hits_by_tens'][$dezena] = (isset($result['hits_by_tens'][$dezena]) ? $result['hits_by_tens'][$dezena] + 1 : 1);
                         $result['hits_by_tens_group'][$c_nx][$dezena] = (isset($result['hits_by_tens_group'][$c_nx][$dezena]) ? $result['hits_by_tens_group'][$c_nx][$dezena] + 1 : 1);
                     }
+                }else{
+                    $result['error_by_group'][$c_nx] = (empty($result['error_by_group'][$c_nx]) ? 1 : $result['error_by_group'][$c_nx] + 1);
                 }
             }
 
@@ -137,6 +152,12 @@ class Computer
 
         arsort($result['hits_by_tens']);
         arsort($result['hits_by_group']);
+        arsort($result['error_by_group']);
+
+        foreach ($result['hits_by_group'] as $key => $value) {
+            $result['percent_hits_by_group'][$key] = (100 / ($value + $result['error_by_group'][$key])) * $value;
+        }
+        arsort($result['percent_hits_by_group']);
 
         return $result;
     }
@@ -200,7 +221,7 @@ class Computer
                 $game_test = end($dataset);
                 $key_last_game_test = array_key_last($dataset);
                 unset($dataset[$key_last_game_test]);
-                $game = self::predict($dataset, 1, $c_nx);
+                $game = self::predict($dataset, self::$cla, $c_nx);
 
                 $gameUnique = array_unique($game);
                 $acertos = self::checkHits($game_test, $gameUnique);
@@ -268,7 +289,7 @@ class Computer
     public static function exPredict($dataset, $c_nx, $game_test = []): array
     {
         if (count($game_test) >= 15) {
-            $game = self::predict($dataset, 1, $c_nx);
+            $game = self::predict($dataset, self::$cla, $c_nx);
             $gameUnique = array_unique($game);
             $acertos = self::checkHits($game_test, $gameUnique);
 
@@ -282,7 +303,7 @@ class Computer
                     . "\n";
             }
         } else {
-            $game = self::predict($dataset, 1, $c_nx);
+            $game = self::predict($dataset, self::$cla, $c_nx);
             $gameUnique = array_unique($game);
 
             echo Helper::title('Previsão de Números')
