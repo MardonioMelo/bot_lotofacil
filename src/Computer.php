@@ -25,17 +25,12 @@ class Computer
     {
         echo date("d/m/Y H:i:s") . " - Inicio \n";
 
-        $corect = [2, 3, 4, 5, 7, 8, 10, 11, 12, 14, 15, 20, 22, 23, 24];
+        //$corect = [1, 2, 3, 4, 5, 7, 8, 11, 12, 13, 14, 15, 16, 20, 25]; // 2674
 
         // $dataset = (new Calculation())->getLastGames(400);
         // foreach (array_merge(self::$max, self::$med, self::$min) as $c_nx) {
-        //     $dezenas = self::exPredict($dataset, $c_nx, $corect);
-        //     foreach ($dezenas as $key => $dezena) {
-        //         self::$data[$dezena] = empty(self::$data[$dezena])? 1: self::$data[$dezena] + 1;
-        //     }
+        //    self::exPredict($dataset, $c_nx, $corect);
         // }
-        // krsort(self::$data);
-        // print_r(self::$data);
 
         // Gerar arquivos de treino
         // self::generateTraining(400, 5, 0);
@@ -74,14 +69,14 @@ class Computer
 
         // Procedimentos para novos jogos -------------------------------------->
 
-        # Gerar arquivos de treino
-        // self::generateTraining(400, 0, 0);
+        // # Gerar arquivos de treino
+        self::generateTraining(400, 0, 0);
 
         // # Atualizar treinamento
-        // echo date("d/m/Y H:i:s") . " - Atualizando base de dados de treinamento \n";
-        // self::updateTraining(400, ['training0.json']);
+        echo date("d/m/Y H:i:s") . " - Atualizando base de dados de treinamento \n";
+        self::updateTraining(400, ['training0.json']);
 
-        // # Últimos jogos 
+        # Últimos jogos 
         echo date("d/m/Y H:i:s") . " - Obtendo lista dos últimos jogos \n";
         $dataset = (new Calculation())->getLastGames(400);
 
@@ -91,22 +86,12 @@ class Computer
         Helper::saveFile('predict.json', json_encode($groups));
 
         // # Selecionar dezenas mais previstas
-        // echo date("d/m/Y H:i:s") . " - Selecionando dezenas mais previstas\n";
-        // $predict = json_decode(file_get_contents('predict.json'), true);
-        // $tens = array_keys(array_slice($predict['hits_by_tens'], 0, 15, true));
-        // sort($tens);
+        echo date("d/m/Y H:i:s") . " - Selecionando o agrupamento com maior probabilidade\n";
+        $predict = json_decode(file_get_contents('predict.json'), true);
+        $c_nx = array_key_first($predict['percent_hits_by_group']);
 
-        // // Metodo do match dos 15 primeiros em cada grupo para pegar um grupo promissor
-        // $match = [];
-        // foreach ($predict['hits_by_tens_group'] as $group => $tens_group) {
-        //    $match[$group] = count(self::checkHits($tens_group, $tens));
-        // }
-        // print_r($match);
-
-        // echo "\nPrevisão do Jogo: " . array_key_last($dataset) + 1
-        //     . "\nPrevisto: " . implode('-', $tens)
-        //     . "\nAcertos: " . count(self::checkHits($corect, $tens))
-        //     . "\n";
+        //self::exPredict($dataset, $c_nx, $corect);   
+        self::exPredict($dataset, $c_nx);   
 
         echo "\n" . date("d/m/Y H:i:s") . " - Fim \n";
     }
@@ -125,6 +110,8 @@ class Computer
         $training = json_decode(file_get_contents($name_file), true);
         foreach ($training['training'][$ngames] as $c_nx => $data) {
 
+            $i = 0;
+            sort($data);
             foreach ($data as $dataGame) {
                 $game = self::predict($dataset, self::$cla, $c_nx);
                 $gameUnique = array_unique($game);
@@ -141,9 +128,12 @@ class Computer
                         $result['hits_by_tens'][$dezena] = (isset($result['hits_by_tens'][$dezena]) ? $result['hits_by_tens'][$dezena] + 1 : 1);
                         $result['hits_by_tens_group'][$c_nx][$dezena] = (isset($result['hits_by_tens_group'][$c_nx][$dezena]) ? $result['hits_by_tens_group'][$c_nx][$dezena] + 1 : 1);
                     }
-                }else{
+                } else {
                     $result['error_by_group'][$c_nx] = (empty($result['error_by_group'][$c_nx]) ? 1 : $result['error_by_group'][$c_nx] + 1);
                 }
+
+                $i++;
+                if ($i == 100) break;
             }
 
             arsort($result['hits_by_tens_group'][$c_nx]);
@@ -154,8 +144,13 @@ class Computer
         arsort($result['hits_by_group']);
         arsort($result['error_by_group']);
 
+        // $max_g = max($training['qtd_game_cnx'][$ngames]);
         foreach ($result['hits_by_group'] as $key => $value) {
-            $result['percent_hits_by_group'][$key] = (100 / ($value + $result['error_by_group'][$key])) * $value;
+            $total = $value + $result['error_by_group'][$key];
+            // $diff = $max_g - $total;
+            // $normalize = (100/$max_g) * ($diff);
+            $percent_hits = (100 / $total) * $value;
+            $result['percent_hits_by_group'][$key] = $percent_hits;  //($diff>0? $percent_hits - $normalize: $percent_hits);           
         }
         arsort($result['percent_hits_by_group']);
 
@@ -295,6 +290,7 @@ class Computer
 
             if (count($acertos) >= 11) {
                 echo Helper::title('Previsão de Números')
+                    . "\nPrevisão do Jogo: " . array_key_last($dataset) + 2
                     . "\nJogos: " . count($dataset)
                     . "\nGrupo: " . $c_nx
                     . "\nCorreto: " . implode('-', $game_test)
@@ -307,6 +303,7 @@ class Computer
             $gameUnique = array_unique($game);
 
             echo Helper::title('Previsão de Números')
+                . "\nPrevisão do Jogo: " . array_key_last($dataset) + 2
                 . "\nJogos: " . count($dataset)
                 . "\nGrupo: " . $c_nx
                 . "\nPrevisto: " . implode('-', $gameUnique) . ' (' . count($gameUnique) . ')'
