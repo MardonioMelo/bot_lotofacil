@@ -25,60 +25,36 @@ class Computer
     {
         echo date("d/m/Y H:i:s") . " - Inicio \n";
 
-        //$corect = [1, 2, 3, 4, 5, 7, 8, 11, 12, 13, 14, 15, 16, 20, 25]; // 2674
+        $corect = [2, 4, 7, 9, 10, 12, 13, 14, 16, 18, 20, 22, 23, 24, 25]; // 2675
 
-        // $dataset = (new Calculation())->getLastGames(400);
-        // foreach (array_merge(self::$max, self::$med, self::$min) as $c_nx) {
-        //    self::exPredict($dataset, $c_nx, $corect);
-        // }
-
-        // Gerar arquivos de treino
-        // self::generateTraining(400, 5, 0);
-        // self::generateTraining(400, 1000, 0);
-        // self::generateTraining(400, 1100, 1001);
-        // self::generateTraining(400, 1200, 1101);
-        // self::generateTraining(400, 1300, 1201);
-        // self::generateTraining(400, 1400, 1301);
-        // self::generateTraining(400, 1500, 1401);
-        // self::generateTraining(400, 1600, 1501);
-        // self::generateTraining(400, 1700, 1601);
-        // self::generateTraining(400, 1800, 1701);
-        // self::generateTraining(400, 1900, 1801);
-        // self::generateTraining(400, 2000, 1901);
-        // self::generateTraining(400, 2100, 2001);
-        // self::generateTraining(400, 2200, 2101);
-        // self::generateTraining(400, 2201, 0);
-
-        // Atualizar treinamento
-        // self::updateTraining(400);
-        // self::updateTraining(400, ['training2201.json']);
-        // self::updateTraining(400, ['not_file']);
-
-        // Últimos jogos 
-        // $dataset = (new Calculation())->getLastGames(400);
-
-        // Procurar pelos grupos e dezenas ideais
-        // $groups = self::searchGrouping($dataset, 'training.json');
-        // Helper::saveFile('predict.json', json_encode($groups));
-        // print_r($groups);
-
-        // Prever
-        // foreach ($groups['grouping'] as $c_nx) {
-        //     self::exPredict($dataset, $c_nx, $corect);
-        // }
+        //     $dataset = (new Calculation())->getLastGames(400);
+        //    // foreach (array_merge(self::$max, self::$med, self::$min) as $c_nx) {
+        //     $c_nx = 10;
+        //     while ($c_nx <= 300) {
+        //         self::exPredict($dataset, $c_nx, $corect);
+        //         $c_nx++;
+        //     }
+        //  }
 
         // Procedimentos para novos jogos -------------------------------------->
 
+        $ngames = 400;
+        $getQtdTotalGames = (new Calculation())->getQtdTotalGames();
+        $qtdGamesTraining = $getQtdTotalGames - $ngames;
+
         // # Gerar arquivos de treino
-        self::generateTraining(400, 0, 0);
+        // // self::updateTraining($ngames);
+        // // self::updateTraining($ngames, ['training2201.json']);
+        // // self::updateTraining($ngames, ['not_file']);
+        self::generateTraining($ngames, $qtdGamesTraining, 0);
 
-        // # Atualizar treinamento
+        // // # Atualizar treinamento
         echo date("d/m/Y H:i:s") . " - Atualizando base de dados de treinamento \n";
-        self::updateTraining(400, ['training0.json']);
+        self::updateTraining($ngames, ["training$qtdGamesTraining.json"]);
 
-        # Últimos jogos 
+        // # Últimos jogos 
         echo date("d/m/Y H:i:s") . " - Obtendo lista dos últimos jogos \n";
-        $dataset = (new Calculation())->getLastGames(400);
+        $dataset = (new Calculation())->getLastGames($ngames);
 
         # Gerar predict
         echo date("d/m/Y H:i:s") . " - Gerando previsão\n";
@@ -90,8 +66,8 @@ class Computer
         $predict = json_decode(file_get_contents('predict.json'), true);
         $c_nx = array_key_first($predict['percent_hits_by_group']);
 
-        //self::exPredict($dataset, $c_nx, $corect);   
-        self::exPredict($dataset, $c_nx);   
+        self::exPredict($dataset, $c_nx, $corect);
+        // self::exPredict($dataset, $c_nx);   
 
         echo "\n" . date("d/m/Y H:i:s") . " - Fim \n";
     }
@@ -110,8 +86,8 @@ class Computer
         $training = json_decode(file_get_contents($name_file), true);
         foreach ($training['training'][$ngames] as $c_nx => $data) {
 
-            $i = 0;
-            sort($data);
+            // $i = 0;
+            // sort($data);
             foreach ($data as $dataGame) {
                 $game = self::predict($dataset, self::$cla, $c_nx);
                 $gameUnique = array_unique($game);
@@ -132,10 +108,9 @@ class Computer
                     $result['error_by_group'][$c_nx] = (empty($result['error_by_group'][$c_nx]) ? 1 : $result['error_by_group'][$c_nx] + 1);
                 }
 
-                $i++;
-                if ($i == 100) break;
+                // $i++;
+                // if ($i == 210) break;
             }
-
             arsort($result['hits_by_tens_group'][$c_nx]);
         }
         $result['grouping'] = array_values(array_unique($grouping));
@@ -167,7 +142,7 @@ class Computer
     public static function updateTraining($ngames = 400, $files = [])
     {
         $save_file = "training.json";
-        self::$data = json_decode(file_get_contents($save_file), true);
+       if(file_exists($save_file)) self::$data = json_decode(file_get_contents($save_file), true);
 
         $path = "temp/";
         $dir = dir($path);
@@ -208,9 +183,9 @@ class Computer
 
         while ($preOffset >= $limitOffSet) {
 
-            // $c_nx = 23;
-            // while ($c_nx <= 100) {
-            foreach ($groups as $c_nx) {
+            $c_nx = 10;
+            while ($c_nx <= 300) {
+                //foreach ($groups as $c_nx) {
 
                 $dataset = $cal->getLastGames($ngames + 1, $preOffset);
                 $game_test = end($dataset);
@@ -228,9 +203,10 @@ class Computer
                     self::$data['training'][$ngames][$c_nx][$concurso]['hits'] = count($acertos);
                     self::$data['training'][$ngames][$c_nx][$concurso]['correct_tens'] = $acertos;
                 }
+
+                //}
+                $c_nx++;
             }
-            //$c_nx++;
-            //}
             $preOffset--;
         }
 

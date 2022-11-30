@@ -382,7 +382,7 @@ class Calculation
      * Consultar quantidade total de concursos
      *
      * @param integer $qtd
-     * @return array
+     * @return int
      */
     public function getQtdTotalGames(): int
     {
